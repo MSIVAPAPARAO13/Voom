@@ -1,0 +1,32 @@
+# === FRONTEND (React) ===
+zfrontend/node_modules/
+zfrontend/.pnp
+zfrontend/pnp.js
+zfrontend/coverage/
+zfrontend/build/
+zfrontend/.DS_Store
+
+zfrontend/.env.local
+zfrontend/.env.development.local
+zfrontend/.env.test.local
+zfrontend/.env.production.local
+
+zfrontend/npm-debug.log*
+zfrontend/yarn-debug.log*
+zfrontend/yarn-error.log*
+
+# === BACKEND (Node.js / Express) ===
+ZBACKEND/node_modules/
+ZBACKEND/.env
+ZBACKEND/.DS_Store
+
+ZBACKEND/npm-debug.log*
+ZBACKEND/yarn-debug.log*
+ZBACKEND/yarn-error.log*
+
+# === COMMON ===
+.vscode/
+*.log
+.env
+.DS_Store
+Thumbs.db
