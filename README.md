@@ -1,157 +1,167 @@
-# 🎥 Voom — Peer-to-Peer Video Conferencing App (WebRTC + MERN + Socket.IO)
+# Voom — Enterprise-Grade Peer-to-Peer Video Conferencing Platform
 
-Voom is a full-fledged peer-to-peer video conferencing web application inspired by platforms like Google Meet and Zoom.
-Built from scratch using WebRTC, Socket.IO, and the MERN stack, it enables seamless real-time communication between users with a clean UI and secure authentication.
+Voom is a comprehensive, multi-tenant SaaS video conferencing platform built on modern WebRTC, Socket.IO, and the MERN stack. It offers real-time audio/video communication, AI-driven insights, collaboration workspaces, and enterprise billing/entitlement structures in a scalable architecture.
 
-## 🚀 Why I Built This
+## Overview
 
-During online classes, my friends and I constantly used Zoom and Google Meet.
-I always wondered:
+Voom goes beyond simple video calls. By integrating AI features, persistent workspaces, multi-tenancy organizations, and background task queues, Voom delivers a robust experience similar to Zoom or Microsoft Teams, designed for professional, scalable deployments.
 
-How does my video appear instantly on someone else’s screen?
+## Key Features
 
-Where’s the backend magic?
+- **Authentication**: JWT-based login with refresh-token rotation and strict session families.
+- **Multi-Tenancy**: Organization-based partitioning, RBAC (Role-Based Access Control), and strict tenant isolation.
+- **Video Meetings**: Low-latency P2P WebRTC capabilities with graceful fallback architecture.
+- **Chat**: Persistent, real-time messaging using Socket.IO.
+- **Workspace**: Interactive collaboration tools including notes, agendas, and resource management.
+- **Recording**: Meeting recordings triggered securely through the platform.
+- **Transcription**: Automated transcription of meeting recordings via AI providers.
+- **AI Insights**: Automated meeting summaries, action items, and knowledge extraction.
+- **Voom Memory (Ask Voom)**: RAG (Retrieval-Augmented Generation) based vector search across organizational transcripts and knowledge chunks.
+- **Realtime Scaling**: Socket.IO clustered events with Redis Pub/Sub adapter.
+- **Background Processing**: BullMQ job queues for heavy tasks (transcription, intelligence, and indexing).
+- **Billing**: Multi-tiered subscription models, strict usage tracking, and automated entitlements.
+- **Security**: Robust threat modeling, sanitization, Helmet headers, error masking, and rate limiting.
 
-Is this WebRTC sorcery? Node.js wizardry? Or Elon? 😅
+## Architecture
 
-Curiosity turned into obsession — and instead of just joining meetings, I decided to build my own video conferencing app.
-That’s how Voom was born.
+Voom employs a scalable backend architecture optimized for real-time collaboration and compute-heavy background tasks.
 
-## ✨ Features
-🎥 One-Click Video Calls
+```
+React Frontend (SPA)
+       │
+       ▼
+Node.js Express API (Web Service) ──▶ MongoDB Atlas (Document & Vector Store)
+       │
+       ▼
+Redis (Pub/Sub & Queue)
+       │
+       ▼
+BullMQ Background Workers (AI & Transcription)
+```
 
-Real-time audio/video streaming using WebRTC
+**Realtime:** P2P WebRTC signaling is routed through the Socket.IO server, abstracted to support future upgrades to an SFU like LiveKit.
 
-Peer-to-peer communication for low latency
+## Project Structure
 
-🔐 Secure Authentication
+```
+VOOM/
+├── ZBACKEND/
+│   ├── src/
+│   │   ├── config/          # Configurations & env loaders
+│   │   ├── controllers/     # API route handlers
+│   │   ├── middleware/      # Auth, tenant, security middlewares
+│   │   ├── models/          # Mongoose schemas
+│   │   ├── routes/          # Express route definitions
+│   │   ├── services/        # Business logic & AI provider integrations
+│   │   ├── sockets/         # Socket.IO handlers
+│   │   ├── workers/         # BullMQ queue processors
+│   │   ├── utils/           # Utilities & helpers
+│   │   ├── app.js           # Express app setup
+│   │   ├── server.js        # Web Server entry point
+│   │   └── worker.js        # Background worker entry point
+│   ├── package.json
+│   └── .env.example
+│
+├── zfrontend/
+│   ├── public/
+│   ├── src/
+│   │   ├── components/      # Reusable UI elements
+│   │   ├── contexts/        # Global application state (Auth, Org)
+│   │   ├── pages/           # Page-level screens
+│   │   ├── realtime/        # WebRTC / LiveKit abstraction logic
+│   │   ├── services/        # API communication & Axios clients
+│   │   ├── styles/          # Global styles
+│   │   └── App.js
+│   ├── package.json
+│   └── .env.example
+│
+├── tests/                   # End-to-end integration and load tests
+│   ├── run_all.mjs
+│   ├── test_phase*.mjs
+│   └── ...
+│
+├── README.md
+└── .gitignore
+```
 
-JWT-based login
+## Tech Stack
 
-Protected routes
+- **Frontend:** React, React Router, Material UI, Axios, Socket.IO Client, WebRTC
+- **Backend:** Node.js, Express, Socket.IO, JWT, BullMQ, Redis
+- **Database:** MongoDB Atlas, Mongoose, Vector Search
+- **AI & Integrations:** OpenAI, AssemblyAI, Deepgram (Abstracted)
 
-User sessions handled safely
+## Local Setup
 
-👥 Meeting History
+### 1. Database & Cache
+- Requires **MongoDB** (Local or Atlas)
+- Requires **Redis** (Minimum v6.2 recommended)
 
-Track previous meetings
+### 2. Backend API
+```bash
+cd ZBACKEND
+npm install
+npm run dev
+```
 
-Know who you talked to & when
+### 3. Background Workers
+To process AI and transcription tasks, run the worker in a separate terminal:
+```bash
+cd ZBACKEND
+node src/worker.js
+```
 
-Stored securely in MongoDB
-
-🖥️ Screen Sharing
-
-Share your entire screen or a specific tab
-
-Great for demos, study sessions, or debugging
-
-💬 Real-Time Chat
-
-Instant messaging inside the call
-
-Uses WebRTC data channels + Socket.IO
-
-🧼 Clean & Responsive UI
-
-Built with Material UI
-
-Works on all screen sizes
-
-## 🛠️ Tech Stack
-Frontend
-
-React.js
-
-Material UI
-
-React Router DOM
-
-WebRTC
-
-Backend
-
-Node.js
-
-Express.js
-
-Socket.IO (Signaling server)
-
-JWT Authentication
-
-MongoDB + Mongoose
-
-Real-Time Communication
-
-WebRTC (Peer-to-peer video/audio)
-
-STUN servers
-
-ICE Candidates
-
-Socket.IO (for signaling)
-
-## 🏗️ Architecture Overview
-React (UI)  --->  Socket.IO Server (Signaling)  --->  WebRTC Peer Connection
-                                |
-                           MongoDB (Auth + History)
-## 📂 Project Structure
-Voom/
-│── client/               # React frontend
-│── server/               # Node.js + Express backend
-│── package.json
-│── README.md
-└── ...
-## ▶️ Run Locally
-Clone the repository
-git clone https://github.com/MSIVAPAPARAO13/Voom
-cd Voom
-Install dependencies
-
-Client
-
-cd client
+### 4. Frontend
+```bash
+cd zfrontend
 npm install
 npm start
+```
 
+## Environment Variables
+*(Do not commit actual secrets! Use the provided `.env.example` templates)*
 
-Server
+**Backend:**
+```env
+PORT=8000
+NODE_ENV=development
+MONGO_URI=
+JWT_ACCESS_SECRET=
+JWT_REFRESH_SECRET=
+REDIS_URL=
+OPENAI_API_KEY=
+ASSEMBLYAI_API_KEY=
+STRIPE_WEBHOOK_SECRET=
+```
 
-cd server
-npm install
-npm start
+**Frontend:**
+```env
+REACT_APP_API_URL=http://localhost:8000/api/v1
+REACT_APP_SOCKET_URL=http://localhost:8000
+```
 
-## 🚧 Current Status
+## Testing
 
-Running on localhost for development
+Voom features a comprehensive suite of integration and load tests.
+To run the full regression suite:
+```bash
+cd tests
+node run_all.mjs
+```
 
-Deployment planned (Render / AWS / Netlify)
+## Deployment Architecture
 
-Fixing some ICE candidate quirks 😅
+The verified deployment architecture isolates components for maximum stability:
 
-Adding multi-participant support soon
+- **Frontend:** Render Static Site (VERIFIED)
+- **Backend API:** Render Web Service (VERIFIED)
+- **Background Worker:** Render Background Worker Service (VERIFIED)
+- **Database:** MongoDB Atlas (VERIFIED)
+- **Cache/Queue:** Production Redis Cluster (VERIFIED)
 
-## 📌 Roadmap
+## Project Status
 
- Group video calls
-
- Call recording
-
- Typing indicators in chat
-
- Email-based invitations
-
- Full cloud deployment
-
-## 🤝 Contributing
-
-PRs are welcome!
-If you’re interested in WebRTC, real-time systems, or peer-to-peer technology — let’s collaborate.
-
-## 🧑‍💻 Author
-
-Siva Paparao Medisetti
-
-## ⭐ Show Your Support
-
-If you found this project interesting, please star 🌟 the repo — it motivates me to work on more WebRTC experiments!
+- Phase 1-14: Completed
+- Phase 15: Load Testing & Reliability (Passed successfully at high concurrency)
+- Phase 15.5: Final Product Audit & GitHub Release (Completed)
+- **Final Status: READY FOR DEPLOYMENT**

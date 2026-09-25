@@ -1,33 +1,57 @@
 import express from "express";
-import { createServer } from "node:http";
-import { Server } from "socket.io";
-import mongoose from "mongoose";
-
+import helmet from "helmet";
+import mongoSanitize from "express-mongo-sanitize";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import userRoutes from "./routes/users.routes.js";
-import { User } from "./models/user.model.js";
-import { connectToSocket } from "./controllers/socketManager.js";
-
+import organizationRoutes from "./routes/organization.routes.js";
+import meetingRoutes from "./routes/meeting.routes.js";
+import healthRoutes from "./routes/health.routes.js";
+import billingRoutes from "./routes/billing.routes.js";
+import { errorHandler } from "./middleware/errorHandler.js";
 
 const app = express();
-const server = createServer(app);
-const io = connectToSocket(server);
 
 app.set("port", process.env.PORT || 8000);
-app.use(cors());
+
+// Enable CORS with credentials and X-Organization-Id header support
+app.use(cors({
+    origin: process.env.CORS_ORIGIN || "http://localhost:3000",
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization", "X-Organization-Id", "X-Billing-Signature"]
+}));
+
+// Security headers
+app.use(helmet());
+
+app.use(cookieParser());
 app.use(express.json({ limit: "40kb" }));
 app.use(express.urlencoded({ limit: "40kb", extended: true }));
 
-app.use("/api/v1/users", userRoutes);
-
-const start = async () => {
-    const connectionDb = await mongoose.connect("mongodb+srv://MEDISETTISIVA:Siva$2005@cluster2.blhix4c.mongodb.net/?retryWrites=true&w=majority&appName=Cluster2");
-    console.log(`MONGO Connected DB Host: ${connectionDb.connection.host}`);
- 
+// Data sanitization against NoSQL query injection
+app.use((req, res, next) => {
+    if (req.body) req.body = mongoSanitize.sanitize(req.body);
+    if (req.params) req.params = mongoSanitize.sanitize(req.params);
     
-    server.listen(app.get("port"), () => {
-        console.log("LISTENING ON PORT", app.get("port"));
-    });
-};
+    // In Express 5, req.query is a getter. Mutate it in place or re-define it.
+    if (req.query) {
+        const sanitizedQuery = mongoSanitize.sanitize({ ...req.query });
+        Object.defineProperty(req, 'query', {
+            value: sanitizedQuery,
+            writable: true
+        });
+    }
+    next();
+});
 
-start();
+// API Routes
+app.use("/api/v1/health", healthRoutes);
+app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/organizations", organizationRoutes);
+app.use("/api/v1/meetings", meetingRoutes);
+app.use("/api/v1/billing", billingRoutes);
+
+// Central Error Handler Middleware
+app.use(errorHandler);
+
+export default app;

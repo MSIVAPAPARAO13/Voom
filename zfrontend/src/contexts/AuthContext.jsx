@@ -1,62 +1,182 @@
-import axios from "axios";
 import httpStatus from "http-status";
-import { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiClient } from "../services/apiClient";
 
 export const AuthContext = createContext({});
 
-const client = axios.create({
-  baseURL: "http://localhost:8000/api/v1/users", // ✅ correct base URL
-});
-
-
 export const AuthProvider = ({ children }) => {
-  const authContext = useContext(AuthContext);
-  const [userData, setUserData] = useState(authContext);
-  const router = useNavigate();
+    // In-memory access token storage (never stored in localStorage)
+    const [token, setToken] = useState(null);
+    const [userData, setUserData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const tokenRef = useRef(null);
+    const router = useNavigate();
 
-  const handleRegister = async (name, username, password) => {
-    try {
-      let request = await client.post("/register", {
-        name: name,
-        username: username,
-        password: password,
-      });
+    // Keep tokenRef synchronized with in-memory token state
+    useEffect(() => {
+        tokenRef.current = token;
+    }, [token]);
 
-      if (request.status === httpStatus.CREATED) {
-        return request.data.message;
-      }
-    } catch (err) {
-      throw err;
-    }
-  };
+    // Axios request interceptor: attach short-lived Bearer access token
+    useEffect(() => {
+        const reqInterceptor = apiClient.interceptors.request.use(
+            (config) => {
+                if (tokenRef.current) {
+                    config.headers.Authorization = `Bearer ${tokenRef.current}`;
+                }
+                return config;
+            },
+            (error) => Promise.reject(error)
+        );
 
-  const handleLogin = async (username, password) => {
-    try {
-      let request = await client.post("/login", {
-        username: username,
-        password: password,
-      });
+        // Axios response interceptor: auto-refresh on 401 with single-retry guard
+        const resInterceptor = apiClient.interceptors.response.use(
+            (response) => response,
+            async (error) => {
+                const originalRequest = error.config;
 
-      console.log(username, password);
-      console.log(request.data);
+                if (
+                    error.response?.status === 401 &&
+                    !originalRequest._retry &&
+                    !originalRequest.url?.includes("/refresh") &&
+                    !originalRequest.url?.includes("/login")
+                ) {
+                    originalRequest._retry = true;
 
-      if (request.status === httpStatus.OK) {
-        localStorage.setItem("token", request.data.token);
-        router("/home");
-        return request.data; // ✅ Added return to make .data usable
-      }
-    } catch (err) {
-      throw err;
-    }
-  };
+                    try {
+                        const res = await apiClient.post("/users/refresh");
+                        if (res.data?.accessToken) {
+                            setToken(res.data.accessToken);
+                            tokenRef.current = res.data.accessToken;
+                            setUserData(res.data.user);
+                            originalRequest.headers.Authorization = `Bearer ${res.data.accessToken}`;
+                            return apiClient(originalRequest);
+                        }
+                    } catch (refreshErr) {
+                        setToken(null);
+                        tokenRef.current = null;
+                        setUserData(null);
+                        return Promise.reject(refreshErr);
+                    }
+                }
+                return Promise.reject(error);
+            }
+        );
 
-  const data = {
-    userData,
-    setUserData,
-    handleRegister,
-    handleLogin,
-  };
+        return () => {
+            apiClient.interceptors.request.eject(reqInterceptor);
+            apiClient.interceptors.response.eject(resInterceptor);
+        };
+    }, []);
 
-  return <AuthContext.Provider value={data}>{children}</AuthContext.Provider>;
+    // Restore authentication on initial load / refresh via HttpOnly cookie
+    useEffect(() => {
+        const initAuth = async () => {
+            try {
+                const res = await apiClient.post("/users/refresh");
+                if (res.data?.accessToken) {
+                    setToken(res.data.accessToken);
+                    tokenRef.current = res.data.accessToken;
+                    setUserData(res.data.user);
+                }
+            } catch (err) {
+                setToken(null);
+                tokenRef.current = null;
+                setUserData(null);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        initAuth();
+    }, []);
+
+    const handleRegister = useCallback(async (name, username, password) => {
+        try {
+            const request = await apiClient.post("/users/register", {
+                name,
+                username,
+                password
+            });
+
+            if (request.status === httpStatus.CREATED) {
+                return request.data.message;
+            }
+        } catch (err) {
+            throw err;
+        }
+    }, []);
+
+    const handleLogin = useCallback(async (username, password) => {
+        try {
+            const request = await apiClient.post("/users/login", {
+                username,
+                password
+            });
+
+            if (request.status === httpStatus.OK) {
+                setToken(request.data.accessToken);
+                tokenRef.current = request.data.accessToken;
+                setUserData(request.data.user);
+                router("/home");
+                return request.data;
+            }
+        } catch (err) {
+            throw err;
+        }
+    }, [router]);
+
+    const handleLogout = useCallback(async () => {
+        try {
+            await apiClient.post("/users/logout");
+        } catch (err) {
+            console.error("Logout error:", err);
+        } finally {
+            setToken(null);
+            tokenRef.current = null;
+            setUserData(null);
+            router("/auth");
+        }
+    }, [router]);
+
+    const getHistoryOfUser = useCallback(async () => {
+        try {
+            const request = await apiClient.get("/users/get_all_activity");
+            return request.data;
+        } catch (err) {
+            throw err;
+        }
+    }, []);
+
+    const addToUserHistory = useCallback(async (meetingCode) => {
+        try {
+            const request = await apiClient.post("/users/add_to_activity", {
+                meeting_code: meetingCode
+            });
+            return request.data;
+        } catch (err) {
+            throw err;
+        }
+    }, []);
+
+    const contextValue = useMemo(() => ({
+        token,
+        userData,
+        loading,
+        isAuthenticated: !!token,
+        handleRegister,
+        handleLogin,
+        handleLogout,
+        getHistoryOfUser,
+        addToUserHistory
+    }), [token, userData, loading, handleRegister, handleLogin, handleLogout, getHistoryOfUser, addToUserHistory]);
+
+    return (
+        <AuthContext.Provider value={contextValue}>
+            {children}
+        </AuthContext.Provider>
+    );
 };
+
+export const useAuth = () => useContext(AuthContext);

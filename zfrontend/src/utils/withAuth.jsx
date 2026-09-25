@@ -1,19 +1,25 @@
-import { useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom"
+import React, { useEffect, useContext } from "react";
+import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../contexts/AuthContext";
 
 const withAuth = (WrappedComponent) => {
     const AuthComponent = (props) => {
-        const router = useNavigate();
-
-        const isAuthenticated = useCallback(() => {
-            return !!localStorage.getItem("token");
-        }, []);
+        const navigate = useNavigate();
+        const { isAuthenticated, loading } = useContext(AuthContext);
 
         useEffect(() => {
-            if (!isAuthenticated()) {
-                router("/auth");
+            if (!loading && !isAuthenticated) {
+                navigate("/auth");
             }
-        }, [router, isAuthenticated]);
+        }, [loading, isAuthenticated, navigate]);
+
+        if (loading) {
+            return null; // Prevents flashing during initial session verification
+        }
+
+        if (!isAuthenticated) {
+            return null;
+        }
 
         return <WrappedComponent {...props} />;
     };

@@ -19,6 +19,8 @@ zfrontend/yarn-error.log*
 ZBACKEND/node_modules/
 ZBACKEND/.env
 ZBACKEND/.DS_Store
+ZBACKEND/storage/
+storage/
 
 ZBACKEND/npm-debug.log*
 ZBACKEND/yarn-debug.log*
@@ -30,3 +32,8 @@ ZBACKEND/yarn-error.log*
 .env
 .DS_Store
 Thumbs.db
+
+Redis.zip
+Redis/
+dump.rdb
+capture.js
