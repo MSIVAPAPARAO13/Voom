@@ -1,61 +1,122 @@
 .meetVideoContainer {
     position: relative;
     height: 100vh;
-    background: rgb(1, 4, 48);
+    background: #0f172a; /* Modern Tailwind Slate-900 */
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
+/* Local Video usually pinned to bottom left or right */
 .meetUserVideo {
     position: absolute;
-    bottom: 10vh;
-    height: 20vh;
+    bottom: 80px; /* Above control bar */
+    right: 20px;
+    height: 180px;
     width: auto;
-    left: 0;
-    border-radius: 20px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    z-index: 10;
+    transition: transform 0.2s ease;
 }
 
+.meetUserVideo:hover {
+    transform: scale(1.02);
+}
+
+/* Control Bar */
 .buttonContainers {
     position: absolute;
     width: 100vw;
     bottom: 0;
+    padding: 12px 0;
     text-align: center;
+    background: rgba(15, 23, 42, 0.85); /* Slate 900 translucent */
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    z-index: 20;
+}
+
+.buttonContainers button {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    padding: 12px;
+}
+
+.buttonContainers button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
 }
 
 .buttonContainers svg {
-    font-size: 3rem;
+    font-size: 1.6rem;
 }
 
+/* The destructive End Call button */
+.buttonContainers button[style*="red"] {
+    background: #e11d48 !important; /* Rose-600 */
+}
+.buttonContainers button[style*="red"]:hover {
+    background: #be123c !important; /* Rose-700 */
+}
+
+/* Video Grid Layout */
 .conferenceView { 
-
     display: flex;
-    
-    padding: 10px;
-    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    height: calc(100vh - 80px); /* Leave room for control bar */
+    padding: 24px;
+    gap: 16px;
+    overflow-y: auto;
 }
 
-.conferenceView  video {
-    width: 40vw;
-    height: 20vh;
-    min-width: 30vw;
-    border-radius: 10px;
+.conferenceView video {
+    flex: 1 1 30%;
+    max-width: 45%;
+    max-height: 45vh;
+    object-fit: cover;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: #1e293b; /* slate-800 fallback */
 }
 
+/* Chat Drawer overrides */
 .chatRoom {
     position: absolute;
-    height: 90vh;
-    right: 0;
-    background: white;
-    border-radius: 10px;
-    width: 30vw;
-    padding-inline: 20px;
+    height: calc(100vh - 80px); /* Above control bar */
+    bottom: 80px;
+    right: 20px;
+    background: #ffffff;
+    border-radius: 12px;
+    width: 340px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
 }
 
 .chatContainer {
     position: relative;
     height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
-
 .chattingArea {
-    position: absolute;
-    bottom: 0;
+    margin-top: auto;
+    display: flex;
+    gap: 8px;
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
 }

@@ -9,16 +9,22 @@ import meetingRoutes from "./routes/meeting.routes.js";
 import healthRoutes from "./routes/health.routes.js";
 import billingRoutes from "./routes/billing.routes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import { requestCorrelationId, requestMetrics } from "./middleware/observability.js";
 
 const app = express();
 
 app.set("port", process.env.PORT || 8000);
 
+// Observability and Correlation
+app.use(requestCorrelationId);
+app.use(requestMetrics);
+
 // Enable CORS with credentials and X-Organization-Id header support
 app.use(cors({
     origin: process.env.CORS_ORIGIN || "http://localhost:3000",
     credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization", "X-Organization-Id", "X-Billing-Signature"]
+    allowedHeaders: ["Content-Type", "Authorization", "X-Organization-Id", "X-Billing-Signature", "X-Request-Id"],
+    exposedHeaders: ["X-Request-Id"]
 }));
 
 // Security headers

@@ -1,3 +1,4 @@
+import logger from "../utils/logger.js";
 import { KnowledgeChunk } from "../models/knowledgeChunk.model.js";
 import { generateEmbedding } from "./embedding.service.js";
 import mongoose from "mongoose";
@@ -48,7 +49,7 @@ export const searchOrganizationKnowledge = async ({
     // If we are using mock embeddings in a local dev environment, we should use standard MongoDB aggregation without $vectorSearch 
     // to guarantee test stability, unless TEST_REAL_VECTOR_SEARCH is explicitly enabled.
     if (provider === "mock" && process.env.TEST_REAL_VECTOR_SEARCH !== "true") {
-        console.log("Using mock vector search fallback");
+        logger.info("Using mock vector search fallback");
         const chunks = await KnowledgeChunk.find(filter).limit(limit).populate("meeting", "title meetingCode");
         return chunks.map((chunk, idx) => ({
             chunkId: chunk._id,

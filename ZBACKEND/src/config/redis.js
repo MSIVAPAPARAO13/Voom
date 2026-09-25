@@ -1,3 +1,4 @@
+import logger from "../utils/logger.js";
 import Redis from "ioredis";
 
 // Shared Redis configuration across the application
@@ -12,6 +13,6 @@ export const redisSubClient = redisClient.duplicate();
 // Connection options for BullMQ (BullMQ requires maxRetriesPerRequest: null)
 export const connection = new Redis(getRedisUrl(), { maxRetriesPerRequest: null });
 
-redisClient.on("error", (err) => console.error("Redis Client Error", err));
-redisSubClient.on("error", (err) => console.error("Redis SubClient Error", err));
-connection.on("error", (err) => console.error("Redis BullMQ Connection Error", err));
+redisClient.on("error", (err) => logger.error("Redis Client Error", err));
+redisSubClient.on("error", (err) => logger.error("Redis SubClient Error", err));
+connection.on("error", (err) => logger.error("Redis BullMQ Connection Error", err));

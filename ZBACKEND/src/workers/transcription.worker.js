@@ -1,3 +1,4 @@
+import logger from "../utils/logger.js";
 import { Worker } from "bullmq";
 import { connection } from "../config/redis.js";
 import { Meeting } from "../models/meeting.model.js";
@@ -89,7 +90,7 @@ export const transcriptionWorker = new Worker("transcription", async (job) => {
 
         return { success: true, transcriptId: transcript._id };
     } catch (err) {
-        console.error(`Transcription error for recording ${recordingId}:`, err.message);
+        logger.error(`Transcription error for recording ${recordingId}:`, err.message);
         transcript.status = "failed";
         transcript.error = err.message || "Transcription failed";
         await transcript.save().catch(() => {});
@@ -107,5 +108,5 @@ export const transcriptionWorker = new Worker("transcription", async (job) => {
 }, { connection });
 
 transcriptionWorker.on("failed", (job, err) => {
-    console.error(`Job ${job.id} failed with error: ${err.message}`);
+    logger.error(`Job ${job.id} failed with error: ${err.message}`);
 });

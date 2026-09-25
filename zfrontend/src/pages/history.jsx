@@ -348,74 +348,93 @@ function History() {
     };
 
     return (
-        <div style={{ padding: "20px", maxWidth: "800px", margin: "0 auto" }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 3 }}>
-                <IconButton onClick={() => routeTo("/home")} color="primary">
-                    <HomeIcon />
-                </IconButton>
-                <Typography variant="h5" sx={{ fontWeight: 600 }}>
-                    Meeting History & Workspaces
-                </Typography>
-            </Box>
-
-            {meetings.length !== 0 ? (
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                    {meetings.map((e, i) => (
-                        <Card key={e._id || i} variant="outlined" sx={{ borderRadius: 2 }}>
-                            <CardContent sx={{ pb: 1 }}>
-                                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                    <Typography variant="h6" sx={{ fontSize: 16, fontWeight: 600 }}>
-                                        {e.title || `Meeting: ${e.meetingCode}`}
-                                    </Typography>
-                                    <Chip
-                                        label={e.status ? e.status.toUpperCase() : "ENDED"}
-                                        size="small"
-                                        color={e.status === "live" ? "success" : "default"}
-                                    />
-                                </Box>
-                                <Typography sx={{ fontSize: 13, color: "text.secondary", mt: 0.5 }}>
-                                    Code: <strong>{e.meetingCode}</strong> | Date: {formatDate(e.date || e.startedAt)}
-                                </Typography>
-                                {e.description && (
-                                    <Typography sx={{ fontSize: 13, color: "text.secondary", mt: 0.5 }}>
-                                        {e.description}
-                                    </Typography>
-                                )}
-                            </CardContent>
-                            <CardActions sx={{ px: 2, pb: 1.5 }}>
-                                <Button
-                                    size="small"
-                                    variant="outlined"
-                                    startIcon={<AssignmentIcon />}
-                                    onClick={() => handleOpenWorkspace(e.meetingCode)}
-                                >
-                                    View Workspace
-                                </Button>
-                                <Button
-                                    size="small"
-                                    variant="outlined"
-                                    startIcon={<ChatIcon />}
-                                    onClick={() => handleOpenChat(e.meetingCode)}
-                                    sx={{ ml: 1 }}
-                                >
-                                    View Chat
-                                </Button>
-                                <Button
-                                    size="small"
-                                    variant="outlined"
-                                    startIcon={<VideocamIcon />}
-                                    onClick={() => handleOpenRecordings(e.meetingCode)}
-                                    sx={{ ml: 1 }}
-                                >
-                                    Recordings
-                                </Button>
-                            </CardActions>
-                        </Card>
-                    ))}
+        <Box sx={{ minHeight: "100vh", bgcolor: "#f5f7fa", pt: 4, pb: 8 }}>
+            <Box sx={{ maxWidth: "1000px", mx: "auto", px: 3 }}>
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4, bgcolor: "white", p: 3, borderRadius: 2, boxShadow: 1 }}>
+                    <Box>
+                        <Typography variant="h4" sx={{ fontWeight: 800, color: "#2c3e50" }}>
+                            Meeting History
+                        </Typography>
+                        <Typography variant="subtitle1" color="text.secondary">
+                            Everything your team has discussed, captured and learned.
+                        </Typography>
+                    </Box>
+                    <Button variant="outlined" startIcon={<HomeIcon />} onClick={() => routeTo("/home")} sx={{ borderColor: "#FF9839", color: "#FF9839", "&:hover": { borderColor: "#e68933", bgcolor: "rgba(255,152,57,0.1)" } }}>
+                        Back to Dashboard
+                    </Button>
                 </Box>
-            ) : (
-                <Typography color="text.secondary">No past meetings found.</Typography>
-            )}
+
+                {meetings.length !== 0 ? (
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                        {meetings.map((e, i) => (
+                            <Card key={e._id || i} sx={{ borderRadius: 3, boxShadow: 2, overflow: 'visible', borderLeft: e.status === "live" ? "6px solid #2ecc71" : "6px solid #FF9839" }}>
+                                <CardContent sx={{ p: 3 }}>
+                                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}>
+                                        <Box>
+                                            <Typography variant="h5" sx={{ fontWeight: 700, color: "#2c3e50", mb: 0.5 }}>
+                                                {e.title && e.title !== "Untitled Meeting" ? e.title : `Meeting: ${e.meetingCode}`}
+                                            </Typography>
+                                            <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                <span>{formatDate(e.date || e.startedAt)}</span>
+                                                <span>•</span>
+                                                <span>Code: <strong>{e.meetingCode}</strong></span>
+                                            </Typography>
+                                        </Box>
+                                        <Chip
+                                            label={e.status ? e.status.toUpperCase() : "ENDED"}
+                                            size="small"
+                                            color={e.status === "live" ? "success" : "default"}
+                                            sx={{ fontWeight: "bold" }}
+                                        />
+                                    </Box>
+                                    
+                                    {e.description && (
+                                        <Typography sx={{ color: "text.secondary", mb: 2, bgcolor: "#f8f9fa", p: 1.5, borderRadius: 1 }}>
+                                            {e.description}
+                                        </Typography>
+                                    )}
+                                </CardContent>
+                                <Box sx={{ bgcolor: "#f8f9fa", px: 3, py: 2, borderTop: "1px solid #eee", display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                                    <Button
+                                        size="small"
+                                        variant="contained"
+                                        startIcon={<AssignmentIcon />}
+                                        onClick={() => handleOpenWorkspace(e.meetingCode)}
+                                        sx={{ bgcolor: "#FF9839", "&:hover": { bgcolor: "#e68933" }, boxShadow: 0 }}
+                                    >
+                                        Workspace
+                                    </Button>
+                                    <Button
+                                        size="small"
+                                        variant="outlined"
+                                        startIcon={<ChatIcon />}
+                                        onClick={() => handleOpenChat(e.meetingCode)}
+                                        sx={{ borderColor: "#bdc3c7", color: "#34495e" }}
+                                    >
+                                        Chat Log
+                                    </Button>
+                                    <Button
+                                        size="small"
+                                        variant="outlined"
+                                        startIcon={<VideocamIcon />}
+                                        onClick={() => handleOpenRecordings(e.meetingCode)}
+                                        sx={{ borderColor: "#bdc3c7", color: "#34495e" }}
+                                    >
+                                        Recordings & Transcripts
+                                    </Button>
+                                </Box>
+                            </Card>
+                        ))}
+                    </Box>
+                ) : (
+                    <Box sx={{ textAlign: "center", py: 10, bgcolor: "white", borderRadius: 3, boxShadow: 1 }}>
+                        <Typography variant="h6" color="text.secondary" mb={2}>No past meetings found.</Typography>
+                        <Button variant="contained" onClick={() => routeTo("/home")} sx={{ bgcolor: "#FF9839" }}>
+                            Start your first meeting
+                        </Button>
+                    </Box>
+                )}
+            </Box>
 
             {/* Persistent Workspace Viewer Dialog */}
             <Dialog
@@ -1051,7 +1070,7 @@ function History() {
                     <Button onClick={handleCloseRecordings}>Close</Button>
                 </DialogActions>
             </Dialog>
-        </div>
+        </Box>
     );
 }
 

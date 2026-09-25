@@ -1,0 +1,68 @@
+services:
+  # -------------------------
+  # 1. Static Frontend
+  # -------------------------
+  - type: web
+    name: voom-frontend
+    env: static
+    buildCommand: "cd zfrontend && npm ci && npm run build"
+    staticPublishPath: "./zfrontend/build"
+    envVars:
+      - key: REACT_APP_API_URL
+        # This will be replaced by the Render Web Service URL in production
+        value: "https://voom-api.onrender.com/api/v1"
+      - key: REACT_APP_SOCKET_URL
+        value: "https://voom-api.onrender.com"
+
+  # -------------------------
+  # 2. Node.js API Service
+  # -------------------------
+  - type: web
+    name: voom-api
+    env: node
+    buildCommand: "cd ZBACKEND && npm ci"
+    startCommand: "cd ZBACKEND && npm run start"
+    envVars:
+      - key: NODE_ENV
+        value: "production"
+      - key: PORT
+        value: "10000"
+      # CORS configuration pointing to the frontend service
+      - key: CORS_ORIGIN
+        value: "https://voom-frontend.onrender.com"
+      
+      # The following must be securely set in the Render Dashboard:
+      - key: MONGODB_URI
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
+      - key: LIVEKIT_API_KEY
+        sync: false
+      - key: LIVEKIT_API_SECRET
+        sync: false
+      - key: DEEPGRAM_API_KEY
+        sync: false
+
+  # -------------------------
+  # 3. Background Worker
+  # -------------------------
+  - type: worker
+    name: voom-worker
+    env: node
+    buildCommand: "cd ZBACKEND && npm ci"
+    startCommand: "cd ZBACKEND && npm run worker"
+    envVars:
+      - key: NODE_ENV
+        value: "production"
+      
+      # The following must be securely set in the Render Dashboard (sync: false):
+      - key: MONGODB_URI
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: DEEPGRAM_API_KEY
+        sync: false

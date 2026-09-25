@@ -1,3 +1,4 @@
+import logger from "../utils/logger.js";
 import httpStatus from "http-status";
 import crypto from "crypto";
 import { Meeting } from "../models/meeting.model.js";
@@ -2141,7 +2142,7 @@ export const generateRealtimeToken = async (req, res) => {
             url: realtimeData.url
         });
     } catch (error) {
-        console.error("Error generating realtime token:", error);
+        logger.error("Error generating realtime token:", error);
         
         if (error.statusCode === 501) {
             return res.status(httpStatus.NOT_IMPLEMENTED).json({ message: "Internal error" });

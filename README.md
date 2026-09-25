@@ -6,31 +6,16 @@ Voom is a comprehensive, multi-tenant SaaS video conferencing platform built on 
 
 Voom goes beyond simple video calls. By integrating AI features, persistent workspaces, multi-tenancy organizations, and background task queues, Voom delivers a robust experience similar to Zoom or Microsoft Teams, designed for professional, scalable deployments.
 
-## Key Features
-
-- **Authentication**: JWT-based login with refresh-token rotation and strict session families.
-- **Multi-Tenancy**: Organization-based partitioning, RBAC (Role-Based Access Control), and strict tenant isolation.
-- **Video Meetings**: Low-latency P2P WebRTC capabilities with graceful fallback architecture.
-- **Chat**: Persistent, real-time messaging using Socket.IO.
-- **Workspace**: Interactive collaboration tools including notes, agendas, and resource management.
-- **Recording**: Meeting recordings triggered securely through the platform.
-- **Transcription**: Automated transcription of meeting recordings via AI providers.
-- **AI Insights**: Automated meeting summaries, action items, and knowledge extraction.
-- **Voom Memory (Ask Voom)**: RAG (Retrieval-Augmented Generation) based vector search across organizational transcripts and knowledge chunks.
-- **Realtime Scaling**: Socket.IO clustered events with Redis Pub/Sub adapter.
-- **Background Processing**: BullMQ job queues for heavy tasks (transcription, intelligence, and indexing).
-- **Billing**: Multi-tiered subscription models, strict usage tracking, and automated entitlements.
-- **Security**: Robust threat modeling, sanitization, Helmet headers, error masking, and rate limiting.
-
 ## Architecture
 
 Voom employs a scalable backend architecture optimized for real-time collaboration and compute-heavy background tasks.
 
+### Local & Development Architecture
 ```
 React Frontend (SPA)
        │
        ▼
-Node.js Express API (Web Service) ──▶ MongoDB Atlas (Document & Vector Store)
+Node.js Express API (Web Service) ──▶ MongoDB (Document & Vector Store)
        │
        ▼
 Redis (Pub/Sub & Queue)
@@ -39,129 +24,158 @@ Redis (Pub/Sub & Queue)
 BullMQ Background Workers (AI & Transcription)
 ```
 
+### Production Architecture (Prepared for Render)
+```
+                    INTERNET
+                       │
+                       ▼
+              ┌────────────────┐
+              │ React Frontend │ (Render Static Site)
+              └────────────────┘
+                       │
+                       ▼
+              ┌────────────────┐
+              │  Express API   │ (Render Web Service)
+              └────────────────┘
+                 │          │
+                 ▼          ▼
+          MongoDB Atlas    Redis (Managed Provider)
+                 │          │
+                 ▼          ▼
+              ┌────────────────┐
+              │  Worker        │ (Render Background Worker)
+              └────────────────┘
+```
 **Realtime:** P2P WebRTC signaling is routed through the Socket.IO server, abstracted to support future upgrades to an SFU like LiveKit.
 
-## Project Structure
+## Local Development & Environment Setup
 
-```
-VOOM/
-├── ZBACKEND/
-│   ├── src/
-│   │   ├── config/          # Configurations & env loaders
-│   │   ├── controllers/     # API route handlers
-│   │   ├── middleware/      # Auth, tenant, security middlewares
-│   │   ├── models/          # Mongoose schemas
-│   │   ├── routes/          # Express route definitions
-│   │   ├── services/        # Business logic & AI provider integrations
-│   │   ├── sockets/         # Socket.IO handlers
-│   │   ├── workers/         # BullMQ queue processors
-│   │   ├── utils/           # Utilities & helpers
-│   │   ├── app.js           # Express app setup
-│   │   ├── server.js        # Web Server entry point
-│   │   └── worker.js        # Background worker entry point
-│   ├── package.json
-│   └── .env.example
-│
-├── zfrontend/
-│   ├── public/
-│   ├── src/
-│   │   ├── components/      # Reusable UI elements
-│   │   ├── contexts/        # Global application state (Auth, Org)
-│   │   ├── pages/           # Page-level screens
-│   │   ├── realtime/        # WebRTC / LiveKit abstraction logic
-│   │   ├── services/        # API communication & Axios clients
-│   │   ├── styles/          # Global styles
-│   │   └── App.js
-│   ├── package.json
-│   └── .env.example
-│
-├── tests/                   # End-to-end integration and load tests
-│   ├── run_all.mjs
-│   ├── test_phase*.mjs
-│   └── ...
-│
-├── README.md
-└── .gitignore
+### 1. External Dependencies Setup
+**MongoDB Setup**:
+- Install MongoDB locally or create a free tier cluster on **MongoDB Atlas**.
+- Obtain your Connection String URI.
+
+**Redis Setup**:
+- Install Redis locally (Minimum v6.2 recommended) or use a managed provider (e.g. Upstash, Redis Cloud).
+- Obtain your Redis Connection URI.
+
+### 2. Environment Variables
+*(Do not commit actual secrets! Use the provided `.env.example` templates)*
+
+**Backend (`ZBACKEND/.env`)**:
+```env
+PORT=8000
+NODE_ENV=development
+MONGODB_URI=mongodb://localhost:27017/voom
+JWT_ACCESS_SECRET=your-secret
+JWT_REFRESH_SECRET=your-refresh-secret
+REDIS_URL=redis://localhost:6379
+CORS_ORIGIN=http://localhost:3000
+
+# Optional Providers
+OPENAI_API_KEY=
+ASSEMBLYAI_API_KEY=
+STRIPE_WEBHOOK_SECRET=
+LOG_LEVEL=info
+SERVICE_NAME=voom-api
 ```
 
-## Tech Stack
+**Frontend (`zfrontend/.env`)**:
+```env
+REACT_APP_API_URL=http://localhost:8000/api/v1
+REACT_APP_SOCKET_URL=http://localhost:8000
+```
 
-- **Frontend:** React, React Router, Material UI, Axios, Socket.IO Client, WebRTC
-- **Backend:** Node.js, Express, Socket.IO, JWT, BullMQ, Redis
-- **Database:** MongoDB Atlas, Mongoose, Vector Search
-- **AI & Integrations:** OpenAI, AssemblyAI, Deepgram (Abstracted)
-
-## Local Setup
-
-### 1. Database & Cache
-- Requires **MongoDB** (Local or Atlas)
-- Requires **Redis** (Minimum v6.2 recommended)
-
-### 2. Backend API
+### 3. Backend Startup
 ```bash
 cd ZBACKEND
 npm install
 npm run dev
 ```
 
-### 3. Background Workers
+### 4. Worker Startup
 To process AI and transcription tasks, run the worker in a separate terminal:
 ```bash
 cd ZBACKEND
-node src/worker.js
+npm run worker
 ```
 
-### 4. Frontend
+### 5. Frontend Startup
 ```bash
 cd zfrontend
 npm install
 npm start
 ```
 
-## Environment Variables
-*(Do not commit actual secrets! Use the provided `.env.example` templates)*
+## Docker Startup (Production-Like Testing)
 
-**Backend:**
-```env
-PORT=8000
-NODE_ENV=development
-MONGO_URI=
-JWT_ACCESS_SECRET=
-JWT_REFRESH_SECRET=
-REDIS_URL=
-OPENAI_API_KEY=
-ASSEMBLYAI_API_KEY=
-STRIPE_WEBHOOK_SECRET=
-```
+Voom is fully Dockerized for reproducible production-like testing. The provided `docker-compose.yml` orchestrates the API, Worker, Redis, and Frontend static build. 
+*Note: MongoDB remains externally hosted.*
 
-**Frontend:**
-```env
-REACT_APP_API_URL=http://localhost:8000/api/v1
-REACT_APP_SOCKET_URL=http://localhost:8000
+```bash
+# Provide environment variables or export them locally
+export MONGODB_URI="mongodb+srv://..."
+export JWT_ACCESS_SECRET="secret"
+export JWT_REFRESH_SECRET="refresh"
+
+# Build and start all services
+docker-compose build
+docker-compose up -d
 ```
+Access the frontend on `http://localhost:3000`.
+
+## CI/CD Pipeline
+
+Voom includes a fully automated GitHub Actions pipeline (`.github/workflows/ci.yml`).
+On every push or pull request to `main`, the pipeline:
+1. Installs all dependencies deterministically (`npm ci`).
+2. Generates the Frontend production static build.
+3. Initializes an ephemeral Redis service container.
+4. Executes the full `tests/run_all.mjs` backend regression suite utilizing mocked API providers to prevent billing surprises.
+
+## Render Deployment Preparation
+
+The repository is configured with a `render.yaml` Blueprint defining three services:
+1. `voom-frontend`: Static site serving the React application.
+2. `voom-api`: Web Service running the Express application.
+3. `voom-worker`: Background Worker digesting BullMQ queues.
+
+Secrets must be securely provided in the Render dashboard and are explicitly excluded from Git.
+
+## Observability & Health Endpoints
+
+Voom features a robust logging pipeline utilizing a centralized JSON structured logger masking sensitive keys (Passwords, JWTs).
+
+- **Liveness Endpoint:** `GET /api/v1/health` (Used by Docker Healthcheck)
+- **Readiness Endpoint:** `GET /api/v1/health/ready` (Probes MongoDB & Redis without spamming queries)
+
+## Security
+
+Voom leverages advanced enterprise security logic:
+- JWT Access & Refresh Token rotation.
+- Strict Organization Tenant Isolation via Database Scoping.
+- XSS Sanitization, Helmet Headers, and Rate Limiting.
+- Real-time Authorization checks on all socket events.
+- **Docker Security:** Containers run minimally layered Node Alpine images without `.env` inclusions.
+
+## Known External-Provider Limitations
+
+- **OpenAI / AssemblyAI**: By default, tests and development environments utilize `mock` configurations. Without valid paid API keys, intelligence and transcription processes will securely exit and log their limitations.
+- **LiveKit**: Currently unconfigured; WebRTC connections cleanly fallback to native peer-to-peer (P2P).
 
 ## Testing
 
-Voom features a comprehensive suite of integration and load tests.
-To run the full regression suite:
+Voom features a comprehensive suite of integration and load tests located in the `tests/` directory.
+
+To run the full regression suite manually:
 ```bash
 cd tests
+npm ci
 node run_all.mjs
 ```
 
-## Deployment Architecture
-
-The verified deployment architecture isolates components for maximum stability:
-
-- **Frontend:** Render Static Site (VERIFIED)
-- **Backend API:** Render Web Service (VERIFIED)
-- **Background Worker:** Render Background Worker Service (VERIFIED)
-- **Database:** MongoDB Atlas (VERIFIED)
-- **Cache/Queue:** Production Redis Cluster (VERIFIED)
-
 ## Project Status
 
-- Phase 1-14: Completed
-- Phase 15: Load Testing & Reliability (Passed successfully at high concurrency)
-- Phase 15.5: Final Product Audit & GitHub Release (Completed)
-- **Final Status: READY FOR DEPLOYMENT**
+- Phase 1-16: Completed
+- Phase 17: Docker, CI/CD, and Production Readiness Configured.
+- **Final Status: READY FOR PHASE 18 (Final Deployment)**

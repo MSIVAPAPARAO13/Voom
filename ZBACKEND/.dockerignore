@@ -1,0 +1,11 @@
+node_modules
+.git
+.env
+.env.*
+coverage
+logs
+tmp
+storage/
+recordings/
+uploads/
+npm-debug.log

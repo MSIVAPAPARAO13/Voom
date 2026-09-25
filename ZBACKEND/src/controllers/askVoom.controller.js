@@ -1,3 +1,4 @@
+import logger from "../utils/logger.js";
 import httpStatus from "http-status";
 import { askVoom } from "../services/askVoom.service.js";
 import { entitlementService } from "../services/billing/entitlement.service.js";
@@ -41,7 +42,7 @@ export const askOrganizationKnowledge = async (req, res) => {
             sources: result.sources
         });
     } catch (error) {
-        console.error("Ask Voom Error:", error);
+        logger.error("Ask Voom Error:", error);
         return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
             message: `Failed to answer question: `
         });

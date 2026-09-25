@@ -1,3 +1,4 @@
+import logger from "../../utils/logger.js";
 import { MockBillingProvider } from "./mock.provider.js";
 import { Subscription } from "../../models/subscription.model.js";
 import { Plan } from "../../models/plan.model.js";
@@ -56,7 +57,7 @@ class BillingService {
         } catch (error) {
             // Duplicate key error (E11000) means we already saw this event
             if (error.code === 11000) {
-                console.log(`Webhook idempotency skipped duplicate event: ${eventId}`);
+                logger.info(`Webhook idempotency skipped duplicate event: ${eventId}`);
                 return { received: true, processed: false, reason: "duplicate" };
             }
             throw error;

@@ -28,6 +28,7 @@ let ioInstance = null;
 export const getIO = () => ioInstance;
 
 import jwt from "jsonwebtoken";
+import logger from "../utils/logger.js";
 
 export const connectToSocket = (server) => {
     const io = new Server(server, {
@@ -59,7 +60,7 @@ export const connectToSocket = (server) => {
     });
 
     io.on("connection", (socket) => {
-        console.log("Socket connected:", socket.id, "User:", socket.user?.userId || "Guest");
+        logger.info("Socket connected:", socket.id, "User:", socket.user?.userId || "Guest");
 
         /**
          * EVENT: join-call
@@ -77,7 +78,7 @@ export const connectToSocket = (server) => {
             try {
                 meeting = await Meeting.findOne({ meetingCode });
             } catch (e) {
-                console.error("Error querying meeting in join-call:", e.message);
+                logger.error("Error querying meeting in join-call:", e.message);
             }
 
             // Reject join if meeting has ended
@@ -251,7 +252,7 @@ export const connectToSocket = (server) => {
                     data: data,
                     "socket-id-sender": socket.id
                 });
-                console.log("Message in room", matchingRoom, ":", sender, data);
+                logger.info("Message in room", matchingRoom, ":", sender, data);
 
                 // Persist message in MongoDB Message collection
                 let savedMessage = null;
@@ -267,7 +268,7 @@ export const connectToSocket = (server) => {
                         });
                         await savedMessage.save();
                     } catch (e) {
-                        console.error("Error persisting chat message:", e.message);
+                        logger.error("Error persisting chat message:", e.message);
                     }
                 }
 
@@ -332,7 +333,7 @@ export const connectToSocket = (server) => {
                     });
                 }
             } catch (e) {
-                console.error("Error in meeting:chat-edit:", e.message);
+                logger.error("Error in meeting:chat-edit:", e.message);
             }
         });
 
@@ -368,7 +369,7 @@ export const connectToSocket = (server) => {
                     });
                 }
             } catch (e) {
-                console.error("Error in meeting:chat-delete:", e.message);
+                logger.error("Error in meeting:chat-delete:", e.message);
             }
         });
 
@@ -409,7 +410,7 @@ export const connectToSocket = (server) => {
                     });
                 }
             } catch (e) {
-                console.error("Error in meeting:chat-react:", e.message);
+                logger.error("Error in meeting:chat-react:", e.message);
             }
         });
 
@@ -559,7 +560,7 @@ export const connectToSocket = (server) => {
                     await meeting.save();
                 }
             } catch (e) {
-                console.error("Failed to update meeting status to ended:", e);
+                logger.error("Failed to update meeting status to ended:", e);
             }
 
             const p = participants[socket.id];
@@ -587,7 +588,7 @@ export const connectToSocket = (server) => {
             try {
                 await Meeting.updateOne({ meetingCode }, { $set: { settings } });
             } catch (e) {
-                console.error("Failed to persist updated settings in DB:", e);
+                logger.error("Failed to persist updated settings in DB:", e);
             }
 
             const p = participants[socket.id];
@@ -680,7 +681,7 @@ export const connectToSocket = (server) => {
                     });
                 }
             } catch (e) {
-                console.error("Error updating notes via socket:", e.message);
+                logger.error("Error updating notes via socket:", e.message);
             }
         });
 
@@ -808,7 +809,7 @@ export const connectToSocket = (server) => {
                     });
                 }
             } catch (err) {
-                console.error("Error starting recording via socket:", err.message);
+                logger.error("Error starting recording via socket:", err.message);
                 socket.emit("meeting:error", { message: "Failed to start recording." });
             }
         });
@@ -844,7 +845,7 @@ export const connectToSocket = (server) => {
                     });
                 }
             } catch (err) {
-                console.error("Error stopping recording via socket:", err.message);
+                logger.error("Error stopping recording via socket:", err.message);
             }
         });
 
@@ -977,7 +978,7 @@ export const broadcastAIEvent = (meetingCode, eventName, payload) => {
 // =========================================================================
 
 redisSubClient.subscribe("worker:events", (err) => {
-    if (err) console.error("Failed to subscribe to worker:events", err);
+    if (err) logger.error("Failed to subscribe to worker:events", err);
 });
 
 redisSubClient.on("message", (channel, message) => {
@@ -990,7 +991,7 @@ redisSubClient.on("message", (channel, message) => {
                 broadcastAIEvent(data.meetingCode, data.eventName, data.payload);
             }
         } catch (e) {
-            console.error("Failed to process worker event message", e);
+            logger.error("Failed to process worker event message", e);
         }
     }
 });

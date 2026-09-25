@@ -9,9 +9,28 @@ import HomeComponent from './pages/home';
 import History from './pages/history';
 import OrganizationManagement from './pages/OrganizationManagement';
 import AskVoom from './pages/AskVoom';
-
+import { useEffect } from 'react';
 
 function App() {
+  useEffect(() => {
+    // Lightweight Global Frontend Error Visibility
+    const errorHandler = (event) => {
+      console.error("[Runtime Error]", event.error || event.message);
+    };
+    
+    const promiseRejectionHandler = (event) => {
+      console.error("[Unhandled Promise Rejection]", event.reason);
+    };
+
+    window.addEventListener("error", errorHandler);
+    window.addEventListener("unhandledrejection", promiseRejectionHandler);
+
+    return () => {
+      window.removeEventListener("error", errorHandler);
+      window.removeEventListener("unhandledrejection", promiseRejectionHandler);
+    };
+  }, []);
+
   return (
     <div className="App">
       <Router>

@@ -1,3 +1,4 @@
+import logger from "./utils/logger.js";
 import dotenv from "dotenv";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -19,13 +20,13 @@ const PORT = app.get("port");
 
 const startServer = async () => {
     server.listen(PORT, () => {
-        console.log(`SERVER RUNNING ON PORT ${PORT}`);
+        logger.info(`SERVER RUNNING ON PORT ${PORT}`);
     });
 
     try {
         await connectDB();
     } catch (error) {
-        console.error("Database connection failed. Please ensure a valid MONGODB_URI is configured in .env");
+        logger.error("Database connection failed. Please ensure a valid MONGODB_URI is configured in .env");
     }
 };
 

@@ -1,3 +1,4 @@
+import logger from "./utils/logger.js";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import path from "path";
@@ -24,12 +25,12 @@ const startWorker = async () => {
         }
 
         await mongoose.connect(MONGODB_URI);
-        console.log("Worker connected to MongoDB");
-        console.log("Worker processes started successfully. Listening for background jobs...");
+        logger.info("Worker connected to MongoDB");
+        logger.info("Worker processes started successfully. Listening for background jobs...");
 
         // Graceful shutdown handling
         const shutdown = async (signal) => {
-            console.log(`Received ${signal}. Gracefully shutting down workers...`);
+            logger.info(`Received ${signal}. Gracefully shutting down workers...`);
             
             // Stop accepting new jobs and wait for active ones to finish
             await Promise.all([
@@ -39,7 +40,7 @@ const startWorker = async () => {
                 closeQueues()
             ]);
 
-            console.log("Workers closed successfully.");
+            logger.info("Workers closed successfully.");
             
             // Disconnect MongoDB and Redis
             await mongoose.disconnect();
@@ -47,7 +48,7 @@ const startWorker = async () => {
             redisSubClient.quit();
             connection.quit();
             
-            console.log("Disconnected from MongoDB and Redis. Exiting.");
+            logger.info("Disconnected from MongoDB and Redis. Exiting.");
             process.exit(0);
         };
 
@@ -55,7 +56,7 @@ const startWorker = async () => {
         process.on("SIGTERM", () => shutdown("SIGTERM"));
 
     } catch (err) {
-        console.error("Failed to start worker process:", err);
+        logger.error("Failed to start worker process:", err);
         process.exit(1);
     }
 };

@@ -1,3 +1,4 @@
+import logger from "../utils/logger.js";
 import { Worker } from "bullmq";
 import { connection } from "../config/redis.js";
 import { Meeting } from "../models/meeting.model.js";
@@ -70,7 +71,7 @@ export const intelligenceWorker = new Worker("intelligence", async (job) => {
 
         return { success: true, intelligenceId: intelligence._id };
     } catch (err) {
-        console.error(`AI generation error for recording ${recordingId}:`, err.message);
+        logger.error(`AI generation error for recording ${recordingId}:`, err.message);
         intelligence.status = "failed";
         intelligence.error = err.message || "AI generation failed";
         await intelligence.save().catch(() => {});
@@ -87,5 +88,5 @@ export const intelligenceWorker = new Worker("intelligence", async (job) => {
 }, { connection });
 
 intelligenceWorker.on("failed", (job, err) => {
-    console.error(`Intelligence Job ${job.id} failed: ${err.message}`);
+    logger.error(`Intelligence Job ${job.id} failed: ${err.message}`);
 });

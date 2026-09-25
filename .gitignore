@@ -37,3 +37,6 @@ Redis.zip
 Redis/
 dump.rdb
 capture.js
+
+tests/node_modules/
+tests/package*.json

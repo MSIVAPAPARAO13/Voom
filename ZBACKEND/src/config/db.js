@@ -1,3 +1,4 @@
+import logger from "../utils/logger.js";
 import mongoose from "mongoose";
 
 /**
@@ -7,18 +8,18 @@ export const connectDB = async () => {
     const mongoURI = process.env.MONGODB_URI;
 
     if (!mongoURI) {
-        console.error("WARNING: MONGODB_URI is not defined in environment variables.");
+        logger.error("WARNING: MONGODB_URI is not defined in environment variables.");
         return;
     }
 
     try {
         const connection = await mongoose.connect(mongoURI);
-        console.log("MongoDB connection configured");
-        console.log(`MongoDB host: ${connection.connection.host || "<connected>"}`);
-        console.log(`Database: ${connection.connection.name || "<default>"}`);
+        logger.info("MongoDB connection configured");
+        logger.info(`MongoDB host: ${connection.connection.host || "<connected>"}`);
+        logger.info(`Database: ${connection.connection.name || "<default>"}`);
         return connection;
     } catch (error) {
-        console.error(`MongoDB connection error: ${error.message}`);
+        logger.error(`MongoDB connection error: ${error.message}`);
         throw error;
     }
 };

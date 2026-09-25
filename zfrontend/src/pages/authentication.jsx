@@ -10,12 +10,24 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import Typography from "@mui/material/Typography";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { AuthContext } from "../contexts/AuthContext";
-import { Snackbar } from "@mui/material";
+import { Snackbar, Alert, CircularProgress } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 
-const defaultTheme = createTheme();
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: "#FF9839",
+    },
+    secondary: {
+      main: "#2c3e50",
+    },
+  },
+  typography: {
+    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+  },
+});
 
 export default function Authentication() {
-  // ✅ Set initial values to "" to avoid React warning
   const [username, setUsername] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [name, setName] = React.useState("");
@@ -23,39 +35,41 @@ export default function Authentication() {
   const [message, setMessage] = React.useState("");
   const [formState, setFormState] = React.useState(0);
   const [open, setOpen] = React.useState(false);
-
+  const [loading, setLoading] = React.useState(false);
+  
+  const navigate = useNavigate();
   const { handleRegister, handleLogin } = React.useContext(AuthContext);
 
-  let handleAuth = async () => {
+  const handleAuth = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
     try {
       if (formState === 0) {
         let result = await handleLogin(username, password);
         setMessage(result?.message || "Login successful");
         setOpen(true);
-        setError("");
-      }
-
-      if (formState === 1) {
+        navigate("/home");
+      } else {
         let result = await handleRegister(name, username, password);
-        console.log(result);
         setUsername("");
         setPassword("");
         setName("");
-        setMessage(result?.message || "Registration successful");
+        setMessage(result?.message || "Registration successful! Please login.");
         setOpen(true);
-        setError("");
         setFormState(0);
       }
     } catch (err) {
-      console.log(err);
-      // ✅ Safe error handling
-      let message = err?.response?.data?.message || "Something went wrong";
-      setError(message);
+      let msg = err?.response?.data?.message || "Something went wrong. Please check your connection.";
+      if (err?.response?.status === 401) msg = "Invalid username or password.";
+      setError(msg);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <ThemeProvider theme={defaultTheme}>
+    <ThemeProvider theme={theme}>
       <Grid container component="main" sx={{ height: "100vh" }}>
         <CssBaseline />
         <Grid
@@ -64,47 +78,60 @@ export default function Authentication() {
           sm={4}
           md={7}
           sx={{
-            backgroundImage:
-              "url(https://source.unsplash.com/random?wallpapers)",
-            backgroundRepeat: "no-repeat",
-            backgroundColor: (t) =>
-              t.palette.mode === "light"
-                ? t.palette.grey[50]
-                : t.palette.grey[900],
-            backgroundSize: "cover",
-            backgroundPosition: "center",
+            background: "linear-gradient(135deg, #FF9839 0%, #e67e22 100%)",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            color: "white",
+            p: 4
           }}
-        />
+        >
+          <Typography variant="h2" fontWeight="bold" gutterBottom>
+            Voom
+          </Typography>
+          <Typography variant="h5" textAlign="center" maxWidth="600px">
+            Turn every meeting into reusable knowledge. Persistent workspaces, multi-tenant organizations, and RAG capabilities.
+          </Typography>
+        </Grid>
         <Grid item xs={12} sm={8} md={5} component={Paper} elevation={6} square>
           <Box
             sx={{
-              my: 8,
+              my: 12,
               mx: 4,
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
             }}
           >
-            <Avatar sx={{ m: 1, bgcolor: "secondary.main" }}>
-              <LockOutlinedIcon />
+            <Avatar sx={{ m: 1, bgcolor: "primary.main", width: 56, height: 56 }}>
+              <LockOutlinedIcon fontSize="large" />
             </Avatar>
+            <Typography component="h1" variant="h5" fontWeight="bold" sx={{ mt: 2 }}>
+              {formState === 0 ? "Welcome back" : "Create your account"}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 4 }}>
+              {formState === 0 ? "Continue your meetings, teams, and knowledge." : "Join Voom and start collaborating instantly."}
+            </Typography>
 
-            <div>
+            <Box sx={{ width: '100%', display: 'flex', gap: 2, mb: 3 }}>
               <Button
-                variant={formState === 0 ? "contained" : ""}
-                onClick={() => setFormState(0)}
+                fullWidth
+                variant={formState === 0 ? "contained" : "outlined"}
+                onClick={() => { setFormState(0); setError(""); }}
               >
                 Sign In
               </Button>
               <Button
-                variant={formState === 1 ? "contained" : ""}
-                onClick={() => setFormState(1)}
+                fullWidth
+                variant={formState === 1 ? "contained" : "outlined"}
+                onClick={() => { setFormState(1); setError(""); }}
               >
                 Sign Up
               </Button>
-            </div>
+            </Box>
 
-            <Box component="form" noValidate sx={{ mt: 1 }}>
+            <Box component="form" onSubmit={handleAuth} noValidate sx={{ mt: 1, width: '100%' }}>
               {formState === 1 && (
                 <TextField
                   margin="normal"
@@ -116,6 +143,7 @@ export default function Authentication() {
                   value={name}
                   autoFocus
                   onChange={(e) => setName(e.target.value)}
+                  disabled={loading}
                 />
               )}
 
@@ -129,6 +157,7 @@ export default function Authentication() {
                 value={username}
                 autoFocus={formState === 0}
                 onChange={(e) => setUsername(e.target.value)}
+                disabled={loading}
               />
               <TextField
                 margin="normal"
@@ -140,24 +169,34 @@ export default function Authentication() {
                 type="password"
                 onChange={(e) => setPassword(e.target.value)}
                 id="password"
+                disabled={loading}
               />
 
-              <p style={{ color: "red" }}>{error}</p>
+              {error && (
+                <Alert severity="error" sx={{ mt: 2, width: '100%' }}>
+                  {error}
+                </Alert>
+              )}
 
               <Button
-                type="button"
+                type="submit"
                 fullWidth
                 variant="contained"
-                sx={{ mt: 3, mb: 2 }}
-                onClick={handleAuth}
+                size="large"
+                sx={{ mt: 4, mb: 2, py: 1.5 }}
+                disabled={loading}
               >
-                {formState === 0 ? "Login " : "Register"}
+                {loading ? <CircularProgress size={24} /> : (formState === 0 ? "Sign In" : "Register")}
               </Button>
             </Box>
           </Box>
         </Grid>
       </Grid>
-      <Snackbar open={open} autoHideDuration={4000} message={message} />
+      <Snackbar open={open} autoHideDuration={4000} onClose={() => setOpen(false)}>
+        <Alert onClose={() => setOpen(false)} severity="success" sx={{ width: '100%' }}>
+          {message}
+        </Alert>
+      </Snackbar>
     </ThemeProvider>
   );
 }

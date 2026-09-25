@@ -1,3 +1,4 @@
+import logger from "../utils/logger.js";
 import { redisClient } from "../config/redis.js";
 
 /**
@@ -6,6 +7,6 @@ import { redisClient } from "../config/redis.js";
 export const notifyAPI = (type, meetingCode, eventName, payload) => {
     const message = JSON.stringify({ type, meetingCode, eventName, payload });
     redisClient.publish("worker:events", message).catch((err) => {
-        console.error("Failed to publish worker event", err);
+        logger.error("Failed to publish worker event", err);
     });
 };
