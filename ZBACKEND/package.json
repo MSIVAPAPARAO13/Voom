@@ -13,6 +13,7 @@
   "license": "ISC",
   "description": "Voom backend server",
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@socket.io/redis-adapter": "^8.3.0",
     "@socket.io/redis-emitter": "^5.1.0",
     "bcrypt": "^6.0.0",

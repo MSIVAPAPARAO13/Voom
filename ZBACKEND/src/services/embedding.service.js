@@ -43,6 +43,21 @@ export const generateEmbedding = async (text) => {
         return generateMockEmbedding(text);
     }
 
+    if (process.env.GEMINI_API_KEY && !process.env.OPENAI_API_KEY) {
+        const { GoogleGenerativeAI } = await import("@google/generative-ai");
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        const model = genAI.getGenerativeModel({ model: "gemini-embedding-2" });
+        const result = await model.embedContent(text);
+        // Pad to 1536 dimensions if necessary to match MongoDB index
+        const vector = result.embedding.values;
+        if (vector.length < 1536) {
+            const padded = new Array(1536).fill(0);
+            for(let i = 0; i < vector.length; i++) padded[i] = vector[i];
+            return padded;
+        }
+        return vector;
+    }
+
     const client = getOpenAIClient();
     const response = await client.embeddings.create({
         model: "text-embedding-3-small",
@@ -62,6 +77,25 @@ export const generateEmbeddings = async (texts) => {
 
     if (provider === "mock") {
         return texts.map(generateMockEmbedding);
+    }
+
+    if (process.env.GEMINI_API_KEY && !process.env.OPENAI_API_KEY) {
+        const { GoogleGenerativeAI } = await import("@google/generative-ai");
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        const model = genAI.getGenerativeModel({ model: "gemini-embedding-2" });
+        const results = [];
+        for (const text of texts) {
+            const result = await model.embedContent(text);
+            const vector = result.embedding.values;
+            if (vector.length < 1536) {
+                const padded = new Array(1536).fill(0);
+                for(let i = 0; i < vector.length; i++) padded[i] = vector[i];
+                results.push(padded);
+            } else {
+                results.push(vector);
+            }
+        }
+        return results;
     }
 
     const client = getOpenAIClient();

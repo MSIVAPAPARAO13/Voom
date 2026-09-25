@@ -1,7 +1,7 @@
 .meetVideoContainer {
     position: relative;
     height: 100vh;
-    background: #0f172a; /* Modern Tailwind Slate-900 */
+    background: radial-gradient(circle at center, #1e293b 0%, #020617 100%);
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -10,47 +10,53 @@
 /* Local Video usually pinned to bottom left or right */
 .meetUserVideo {
     position: absolute;
-    bottom: 80px; /* Above control bar */
-    right: 20px;
+    bottom: 90px; /* Above control bar */
+    right: 24px;
     height: 180px;
-    width: auto;
+    aspect-ratio: 16/9;
+    object-fit: cover;
     border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-    border: 2px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.6);
+    border: 2px solid rgba(255, 255, 255, 0.15);
     z-index: 10;
-    transition: transform 0.2s ease;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .meetUserVideo:hover {
-    transform: scale(1.02);
+    transform: translateY(-5px) scale(1.02);
 }
 
 /* Control Bar */
 .buttonContainers {
     position: absolute;
-    width: 100vw;
-    bottom: 0;
-    padding: 12px 0;
+    width: auto;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 24px;
     text-align: center;
-    background: rgba(15, 23, 42, 0.85); /* Slate 900 translucent */
-    backdrop-filter: blur(10px);
-    border-top: 1px solid rgba(255,255,255,0.1);
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
     display: flex;
     justify-content: center;
     gap: 16px;
     z-index: 20;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
 }
 
 .buttonContainers button {
     background: rgba(255, 255, 255, 0.1);
     border-radius: 50%;
-    transition: all 0.2s ease;
-    padding: 12px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 14px;
 }
 
 .buttonContainers button:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-4px) scale(1.05);
+    box-shadow: 0 8px 20px rgba(255, 255, 255, 0.1);
 }
 
 .buttonContainers svg {
@@ -60,9 +66,11 @@
 /* The destructive End Call button */
 .buttonContainers button[style*="red"] {
     background: #e11d48 !important; /* Rose-600 */
+    box-shadow: 0 4px 15px rgba(225, 29, 72, 0.4);
 }
 .buttonContainers button[style*="red"]:hover {
     background: #be123c !important; /* Rose-700 */
+    box-shadow: 0 8px 25px rgba(225, 29, 72, 0.6);
 }
 
 /* Video Grid Layout */

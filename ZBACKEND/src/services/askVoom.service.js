@@ -72,6 +72,15 @@ Use timestamps when available.`;
     if (provider === "mock") {
         // Mock generation behavior for tests
         answerText = `MOCK ANSWER: Based on the meetings, here is a mock response. According to [Source 1], we discussed this.`;
+    } else if (process.env.GEMINI_API_KEY) {
+        const { GoogleGenerativeAI } = await import("@google/generative-ai");
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        const model = genAI.getGenerativeModel({ 
+            model: "antigravity-preview-latest",
+            systemInstruction: systemPrompt
+        });
+        const result = await model.generateContent(userPrompt);
+        answerText = result.response.text();
     } else {
         const client = getOpenAIClient();
         const model = process.env.OPENAI_AI_MODEL || "gpt-4o-mini";

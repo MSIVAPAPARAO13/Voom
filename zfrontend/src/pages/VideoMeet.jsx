@@ -1118,28 +1118,113 @@ export default function VideoMeetComponent() {
     return (
         <div>
             {askForUsername === true ? (
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 20px', background: '#010430', minHeight: '100vh', color: 'white' }}>
-                    <h2>{meetingDetails?.title || "Enter into Lobby"}</h2>
-                    {meetingDetails?.description && (
-                        <p style={{ color: '#ccc', marginBottom: '20px' }}>{meetingDetails.description}</p>
-                    )}
-
-                    <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-                        <TextField
-                            id="outlined-basic"
-                            label="Your Display Name"
-                            value={username}
-                            onChange={e => setUsername(e.target.value)}
-                            variant="outlined"
-                            sx={{ background: 'white', borderRadius: 1 }}
-                        />
-                        <Button variant="contained" size="large" onClick={connect}>Connect</Button>
+                <Box sx={{
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    minHeight: '100vh', 
+                    background: 'linear-gradient(135deg, #2c3e50 0%, #1a252f 100%)',
+                    color: 'white',
+                    p: 4
+                }}>
+                    <Box sx={{ textAlign: 'center', mb: 4, maxWidth: 600 }}>
+                        <Typography variant="h3" fontWeight="bold" sx={{ mb: 1, color: '#FF9839' }}>
+                            {meetingDetails?.title || "Ready to join?"}
+                        </Typography>
+                        {meetingDetails?.description ? (
+                            <Typography variant="subtitle1" color="rgba(255,255,255,0.7)">
+                                {meetingDetails.description}
+                            </Typography>
+                        ) : (
+                            <Typography variant="subtitle1" color="rgba(255,255,255,0.7)">
+                                Check your audio and video before joining the meeting.
+                            </Typography>
+                        )}
                     </Box>
 
-                    <div style={{ width: '480px', maxWidth: '90vw', borderRadius: '10px', overflow: 'hidden', border: '2px solid #333' }}>
-                        <video ref={localVideoref} autoPlay muted style={{ width: '100%', display: 'block' }}></video>
-                    </div>
-                </div>
+                    <Box sx={{ 
+                        width: '100%', 
+                        maxWidth: 720, 
+                        display: 'flex', 
+                        flexDirection: { xs: 'column', md: 'row' }, 
+                        gap: 4, 
+                        alignItems: 'center',
+                        bgcolor: 'rgba(255,255,255,0.05)',
+                        p: 4,
+                        borderRadius: 4,
+                        backdropFilter: 'blur(10px)',
+                        boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
+                    }}>
+                        {/* Video Preview */}
+                        <Box sx={{ flex: 1, width: '100%' }}>
+                            <Box sx={{ 
+                                width: '100%', 
+                                aspectRatio: '16/9',
+                                borderRadius: 3, 
+                                overflow: 'hidden', 
+                                border: '2px solid rgba(255,255,255,0.1)',
+                                bgcolor: 'black',
+                                position: 'relative'
+                            }}>
+                                <video ref={localVideoref} autoPlay muted style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}></video>
+                                
+                                {/* Overlay Controls */}
+                                <Box sx={{ position: 'absolute', bottom: 16, left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: 2 }}>
+                                    <IconButton 
+                                        onClick={handleAudio} 
+                                        sx={{ bgcolor: audio ? 'rgba(255,255,255,0.2)' : '#f44336', color: 'white', '&:hover': { bgcolor: audio ? 'rgba(255,255,255,0.3)' : '#d32f2f' } }}
+                                    >
+                                        {audio ? <MicIcon /> : <MicOffIcon />}
+                                    </IconButton>
+                                    <IconButton 
+                                        onClick={handleVideo} 
+                                        sx={{ bgcolor: video ? 'rgba(255,255,255,0.2)' : '#f44336', color: 'white', '&:hover': { bgcolor: video ? 'rgba(255,255,255,0.3)' : '#d32f2f' } }}
+                                    >
+                                        {video ? <VideocamIcon /> : <VideocamOffIcon />}
+                                    </IconButton>
+                                </Box>
+                            </Box>
+                        </Box>
+
+                        {/* Join Form */}
+                        <Box sx={{ width: { xs: '100%', md: 300 }, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                            <TextField
+                                label="Your Name"
+                                value={username}
+                                onChange={e => setUsername(e.target.value)}
+                                variant="outlined"
+                                fullWidth
+                                sx={{ 
+                                    '& .MuiOutlinedInput-root': {
+                                        color: 'white',
+                                        '& fieldset': { borderColor: 'rgba(255,255,255,0.3)' },
+                                        '&:hover fieldset': { borderColor: 'white' },
+                                        '&.Mui-focused fieldset': { borderColor: '#FF9839' },
+                                    },
+                                    '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
+                                    '& .MuiInputLabel-root.Mui-focused': { color: '#FF9839' }
+                                }}
+                            />
+                            <Button 
+                                variant="contained" 
+                                size="large" 
+                                onClick={connect}
+                                fullWidth
+                                sx={{ 
+                                    bgcolor: '#FF9839', 
+                                    color: 'white', 
+                                    py: 1.5, 
+                                    fontSize: '1.1rem',
+                                    fontWeight: 'bold',
+                                    '&:hover': { bgcolor: '#e68933' } 
+                                }}
+                            >
+                                Join Meeting
+                            </Button>
+                        </Box>
+                    </Box>
+                </Box>
             ) : (
                 <div className={styles.meetVideoContainer}>
                     {/* In-Meeting Chat Drawer */}
@@ -1824,20 +1909,40 @@ export default function VideoMeetComponent() {
 
                     {/* Remote Conference Videos */}
                     <div className={styles.conferenceView}>
-                        {videos.map((v) => (
-                            <div key={v.socketId}>
-                                <video
-                                    data-socket={v.socketId}
-                                    ref={ref => {
-                                        if (ref && v.stream) {
-                                            ref.srcObject = v.stream;
-                                        }
-                                    }}
-                                    autoPlay
-                                    playsInline
-                                />
-                            </div>
-                        ))}
+                        {videos.length === 0 ? (
+                            <Box sx={{ 
+                                display: 'flex', 
+                                flexDirection: 'column', 
+                                alignItems: 'center', 
+                                justifyContent: 'center',
+                                height: '100%',
+                                opacity: 0.7,
+                                animation: 'fadeIn 1s ease-in'
+                            }}>
+                                <PeopleIcon sx={{ fontSize: 80, color: 'white', mb: 2, opacity: 0.8 }} />
+                                <Typography variant="h5" color="white" fontWeight="300" letterSpacing={1}>
+                                    Waiting for others to join...
+                                </Typography>
+                                <Typography variant="body1" color="rgba(255,255,255,0.6)" sx={{ mt: 1 }}>
+                                    You're the only one in the meeting right now.
+                                </Typography>
+                            </Box>
+                        ) : (
+                            videos.map((v) => (
+                                <div key={v.socketId}>
+                                    <video
+                                        data-socket={v.socketId}
+                                        ref={ref => {
+                                            if (ref && v.stream) {
+                                                ref.srcObject = v.stream;
+                                            }
+                                        }}
+                                        autoPlay
+                                        playsInline
+                                    />
+                                </div>
+                            ))
+                        )}
                     </div>
 
                     {/* Host Settings Dialog */}

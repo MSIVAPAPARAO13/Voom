@@ -89,34 +89,39 @@ function HomeComponent() {
     return (
         <Box sx={{ minHeight: "100vh", bgcolor: "#f5f7fa" }}>
             {/* Top Navbar */}
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", p: 2, bgcolor: "white", boxShadow: 1 }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", p: 2, bgcolor: "#2c3e50", color: "white", boxShadow: "0 4px 20px rgba(0,0,0,0.1)" }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
-                    <Typography variant="h5" fontWeight="bold" color="#FF9839" sx={{ cursor: 'pointer' }} onClick={() => navigate("/")}>
-                        Voom
+                    <Typography variant="h5" fontWeight="900" sx={{ color: "#FF9839", cursor: 'pointer', letterSpacing: 1 }} onClick={() => navigate("/")}>
+                        VOOM
                     </Typography>
 
                     {organizations.length > 0 && (
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, bgcolor: "#f8f9fa", p: 0.5, borderRadius: 2 }}>
-                            <CorporateFareIcon color="action" />
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, bgcolor: "rgba(255,255,255,0.1)", p: 0.5, borderRadius: 2 }}>
+                            <CorporateFareIcon sx={{ color: "rgba(255,255,255,0.7)", ml: 1 }} />
                             <Select
                                 size="small"
                                 value={currentOrganization?.id || ""}
                                 onChange={(e) => switchOrganization(e.target.value)}
-                                sx={{ minWidth: 180, "& .MuiOutlinedInput-notchedOutline": { border: "none" } }}
+                                sx={{ 
+                                    minWidth: 180, 
+                                    color: "white",
+                                    "& .MuiOutlinedInput-notchedOutline": { border: "none" },
+                                    "& .MuiSvgIcon-root": { color: "white" }
+                                }}
                             >
                                 {organizations.map((org) => (
                                     <MenuItem key={org.id} value={org.id}>{org.name}</MenuItem>
                                 ))}
                             </Select>
                             {currentOrganization?.role && (
-                                <Chip label={currentOrganization.role.toUpperCase()} size="small" color={currentOrganization.role === "owner" ? "primary" : currentOrganization.role === "admin" ? "secondary" : "default"} />
+                                <Chip label={currentOrganization.role.toUpperCase()} size="small" sx={{ bgcolor: currentOrganization.role === "owner" ? "#FF9839" : "rgba(255,255,255,0.2)", color: "white", fontWeight: "bold" }} />
                             )}
                             {isOwnerOrAdmin && (
-                                <IconButton size="small" color="primary" onClick={() => navigate("/organization")} title="Manage Organization">
+                                <IconButton size="small" sx={{ color: "white" }} onClick={() => navigate("/organization")} title="Manage Organization">
                                     <SettingsIcon />
                                 </IconButton>
                             )}
-                            <IconButton size="small" onClick={() => setOpenNewOrgDialog(true)} title="Create Organization">
+                            <IconButton size="small" sx={{ color: "white" }} onClick={() => setOpenNewOrgDialog(true)} title="Create Organization">
                                 <AddIcon />
                             </IconButton>
                         </Box>
@@ -124,13 +129,13 @@ function HomeComponent() {
                 </Box>
 
                 <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                    <Button startIcon={<RestoreIcon />} onClick={() => navigate("/history")} color="inherit">
+                    <Button startIcon={<RestoreIcon />} onClick={() => navigate("/history")} sx={{ color: "rgba(255,255,255,0.8)", "&:hover": { color: "white", bgcolor: "rgba(255,255,255,0.1)" } }}>
                         History
                     </Button>
-                    <Button startIcon={<SearchIcon />} onClick={() => navigate("/ask")} variant="outlined" color="primary" sx={{ borderRadius: 4 }}>
+                    <Button startIcon={<SearchIcon />} onClick={() => navigate("/ask")} variant="contained" sx={{ bgcolor: "#FF9839", color: "white", borderRadius: 4, "&:hover": { bgcolor: "#e68933" } }}>
                         Ask Voom
                     </Button>
-                    <Button startIcon={<LogoutIcon />} onClick={handleLogout} color="error">
+                    <Button startIcon={<LogoutIcon />} onClick={handleLogout} sx={{ color: "#ff6b6b", "&:hover": { bgcolor: "rgba(255,107,107,0.1)" } }}>
                         Logout
                     </Button>
                 </Box>

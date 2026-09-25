@@ -75,24 +75,52 @@ CRITICAL INSTRUCTIONS:
         }).strict();
 
         try {
-            const response = await client.responses.parse({
-                model: this.model,
-                input: [
-                    { role: "system", content: systemPrompt },
-                    { role: "user", content: `Meeting Transcript:\n\n${transcriptContent}` }
-                ],
-                text: {
-                    format: zodTextFormat(MeetingIntelligenceSchema, "meeting_intelligence")
-                },
-                temperature: 0.1
-            });
+            if (process.env.GEMINI_API_KEY && !this.apiKey) {
+                const { GoogleGenerativeAI } = await import("@google/generative-ai");
+                const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+                const model = genAI.getGenerativeModel({
+                    model: "antigravity-preview-latest",
+                    systemInstruction: systemPrompt,
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "OBJECT",
+                            properties: {
+                                summary: { type: "STRING", description: "A concise summary." },
+                                keyPoints: { type: "ARRAY", items: { type: "STRING" } },
+                                decisions: { type: "ARRAY", items: { type: "OBJECT", properties: { text: { type: "STRING" }, timestamp: { type: "NUMBER", nullable: true } } } },
+                                actionItems: { type: "ARRAY", items: { type: "OBJECT", properties: { task: { type: "STRING" }, assignee: { type: "STRING", nullable: true }, dueDate: { type: "STRING", nullable: true }, timestamp: { type: "NUMBER", nullable: true } } } },
+                                topics: { type: "ARRAY", items: { type: "STRING" } }
+                            },
+                            required: ["summary", "keyPoints", "decisions", "actionItems", "topics"]
+                        }
+                    }
+                });
+                
+                const result = await model.generateContent(`Meeting Transcript:\n\n${transcriptContent}`);
+                const intelligenceText = result.response.text();
+                const intelligence = JSON.parse(intelligenceText);
+                return this.validateAndNormalizeIntelligence(intelligence);
+            } else {
+                const response = await client.responses.parse({
+                    model: this.model,
+                    input: [
+                        { role: "system", content: systemPrompt },
+                        { role: "user", content: `Meeting Transcript:\n\n${transcriptContent}` }
+                    ],
+                    text: {
+                        format: zodTextFormat(MeetingIntelligenceSchema, "meeting_intelligence")
+                    },
+                    temperature: 0.1
+                });
 
-            const intelligence = response.output_parsed;
-            if (!intelligence) {
-                throw new Error("Received empty parsed response from OpenAI.");
+                const intelligence = response.output_parsed;
+                if (!intelligence) {
+                    throw new Error("Received empty parsed response from OpenAI.");
+                }
+
+                return this.validateAndNormalizeIntelligence(intelligence);
             }
-
-            return this.validateAndNormalizeIntelligence(intelligence);
         } catch (error) {
             // Scrub API keys from errors
             let safeMessage = error.message || "AI processing failed";

@@ -70,68 +70,115 @@ export default function Authentication() {
 
   return (
     <ThemeProvider theme={theme}>
-      <Grid container component="main" sx={{ height: "100vh" }}>
+      <Box sx={{ display: 'flex', minHeight: '100vh', width: '100vw' }}>
         <CssBaseline />
-        <Grid
-          item
-          xs={false}
-          sm={4}
-          md={7}
+        
+        {/* Left Side: Hero Image Banner */}
+        <Box
           sx={{
-            background: "linear-gradient(135deg, #FF9839 0%, #e67e22 100%)",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "center",
-            color: "white",
-            p: 4
+            flex: { xs: 0, md: 1.2 },
+            display: { xs: 'none', md: 'flex' },
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            background: 'linear-gradient(135deg, rgba(255,152,57,0.95) 0%, rgba(44,62,80,0.95) 100%), url(https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=1600&q=80)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            color: 'white',
+            p: 6,
+            textAlign: 'center',
+            boxShadow: 'inset 0 0 100px rgba(0,0,0,0.5)'
           }}
         >
-          <Typography variant="h2" fontWeight="bold" gutterBottom>
+          <Typography variant="h2" fontWeight="900" gutterBottom sx={{ 
+            textShadow: '0 4px 20px rgba(0,0,0,0.3)',
+            fontSize: { md: '3.5rem', lg: '4.5rem' },
+            letterSpacing: '-1px'
+          }}>
             Voom
           </Typography>
-          <Typography variant="h5" textAlign="center" maxWidth="600px">
+          <Typography variant="h5" maxWidth="600px" sx={{ 
+            textShadow: '0 2px 10px rgba(0,0,0,0.2)',
+            fontSize: { md: '1.2rem', lg: '1.4rem' },
+            lineHeight: 1.6,
+            opacity: 0.9
+          }}>
             Turn every meeting into reusable knowledge. Persistent workspaces, multi-tenant organizations, and RAG capabilities.
           </Typography>
-        </Grid>
-        <Grid item xs={12} sm={8} md={5} component={Paper} elevation={6} square>
+        </Box>
+
+        {/* Right Side: Authentication Form */}
+        <Box 
+          component={Paper} 
+          elevation={24} 
+          square 
+          sx={{ 
+            flex: 1,
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            bgcolor: '#fdfbfb',
+            zIndex: 10
+          }}
+        >
           <Box
             sx={{
-              my: 12,
-              mx: 4,
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
+              width: '100%',
+              maxWidth: 440,
+              p: { xs: 4, md: 6 }
             }}
           >
-            <Avatar sx={{ m: 1, bgcolor: "primary.main", width: 56, height: 56 }}>
-              <LockOutlinedIcon fontSize="large" />
-            </Avatar>
-            <Typography component="h1" variant="h5" fontWeight="bold" sx={{ mt: 2 }}>
-              {formState === 0 ? "Welcome back" : "Create your account"}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 4 }}>
-              {formState === 0 ? "Continue your meetings, teams, and knowledge." : "Join Voom and start collaborating instantly."}
-            </Typography>
+            <Box sx={{ mb: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+              <Avatar sx={{ m: 1, bgcolor: "#FF9839", width: 64, height: 64, boxShadow: '0 8px 24px rgba(255,152,57,0.4)' }}>
+                <LockOutlinedIcon fontSize="large" sx={{ color: 'white' }} />
+              </Avatar>
+              <Typography component="h1" variant="h4" fontWeight="800" sx={{ mt: 2, color: '#2c3e50', letterSpacing: '-0.5px' }}>
+                {formState === 0 ? "Welcome back" : "Create account"}
+              </Typography>
+              <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
+                {formState === 0 ? "Enter your details to access your workspace." : "Join Voom and start collaborating instantly."}
+              </Typography>
+            </Box>
 
-            <Box sx={{ width: '100%', display: 'flex', gap: 2, mb: 3 }}>
+            <Box sx={{ width: '100%', display: 'flex', p: 0.5, bgcolor: '#f1f3f5', borderRadius: 3, mb: 4 }}>
               <Button
                 fullWidth
-                variant={formState === 0 ? "contained" : "outlined"}
+                disableElevation
+                variant={formState === 0 ? "contained" : "text"}
                 onClick={() => { setFormState(0); setError(""); }}
+                sx={{ 
+                  borderRadius: 2, 
+                  py: 1, 
+                  fontWeight: formState === 0 ? 'bold' : 'medium',
+                  color: formState === 0 ? 'white' : '#7f8c8d',
+                  bgcolor: formState === 0 ? '#2c3e50' : 'transparent',
+                  '&:hover': { bgcolor: formState === 0 ? '#1a252f' : 'rgba(0,0,0,0.05)' }
+                }}
               >
                 Sign In
               </Button>
               <Button
                 fullWidth
-                variant={formState === 1 ? "contained" : "outlined"}
+                disableElevation
+                variant={formState === 1 ? "contained" : "text"}
                 onClick={() => { setFormState(1); setError(""); }}
+                sx={{ 
+                  borderRadius: 2, 
+                  py: 1, 
+                  fontWeight: formState === 1 ? 'bold' : 'medium',
+                  color: formState === 1 ? 'white' : '#7f8c8d',
+                  bgcolor: formState === 1 ? '#2c3e50' : 'transparent',
+                  '&:hover': { bgcolor: formState === 1 ? '#1a252f' : 'rgba(0,0,0,0.05)' }
+                }}
               >
                 Sign Up
               </Button>
             </Box>
 
-            <Box component="form" onSubmit={handleAuth} noValidate sx={{ mt: 1, width: '100%' }}>
+            <Box component="form" onSubmit={handleAuth} noValidate sx={{ width: '100%' }}>
               {formState === 1 && (
                 <TextField
                   margin="normal"
@@ -144,6 +191,7 @@ export default function Authentication() {
                   autoFocus
                   onChange={(e) => setName(e.target.value)}
                   disabled={loading}
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2, bgcolor: 'white' } }}
                 />
               )}
 
@@ -158,6 +206,7 @@ export default function Authentication() {
                 autoFocus={formState === 0}
                 onChange={(e) => setUsername(e.target.value)}
                 disabled={loading}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2, bgcolor: 'white' } }}
               />
               <TextField
                 margin="normal"
@@ -170,10 +219,11 @@ export default function Authentication() {
                 onChange={(e) => setPassword(e.target.value)}
                 id="password"
                 disabled={loading}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2, bgcolor: 'white' } }}
               />
 
               {error && (
-                <Alert severity="error" sx={{ mt: 2, width: '100%' }}>
+                <Alert severity="error" sx={{ mt: 2, width: '100%', borderRadius: 2 }}>
                   {error}
                 </Alert>
               )}
@@ -183,15 +233,23 @@ export default function Authentication() {
                 fullWidth
                 variant="contained"
                 size="large"
-                sx={{ mt: 4, mb: 2, py: 1.5 }}
+                sx={{ 
+                  mt: 4, mb: 2, 
+                  py: 1.8, 
+                  borderRadius: 2, 
+                  fontWeight: 'bold', 
+                  fontSize: '1.1rem',
+                  boxShadow: '0 8px 24px rgba(255,152,57,0.3)',
+                  '&:hover': { boxShadow: '0 12px 32px rgba(255,152,57,0.4)' }
+                }}
                 disabled={loading}
               >
-                {loading ? <CircularProgress size={24} /> : (formState === 0 ? "Sign In" : "Register")}
+                {loading ? <CircularProgress size={24} color="inherit" /> : (formState === 0 ? "SIGN IN TO WORKSPACE" : "CREATE ACCOUNT")}
               </Button>
             </Box>
           </Box>
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
       <Snackbar open={open} autoHideDuration={4000} onClose={() => setOpen(false)}>
         <Alert onClose={() => setOpen(false)} severity="success" sx={{ width: '100%' }}>
           {message}
