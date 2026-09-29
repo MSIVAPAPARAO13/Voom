@@ -415,7 +415,7 @@ function History() {
                                         variant="contained"
                                         startIcon={<AssignmentIcon />}
                                         onClick={() => handleOpenWorkspace(e.meetingCode)}
-                                        sx={{ bgcolor: "#FF9839", "&:hover": { bgcolor: "#e68933" }, boxShadow: 0 }}
+                                        sx={{ bgcolor: "#FF9839", color: "#0B1020", fontWeight: 700, "&:hover": { bgcolor: "#e68933" }, boxShadow: 0 }}
                                     >
                                         Workspace
                                     </Button>
@@ -424,7 +424,7 @@ function History() {
                                         variant="outlined"
                                         startIcon={<ChatIcon />}
                                         onClick={() => handleOpenChat(e.meetingCode)}
-                                        sx={{ borderColor: "#bdc3c7", color: "#34495e" }}
+                                        sx={{ borderColor: "rgba(255,255,255,0.2)", color: "#f8fafc", fontWeight: 600, "&:hover": { borderColor: "#FF9839", color: "#FF9839" } }}
                                     >
                                         Chat Log
                                     </Button>
@@ -433,7 +433,7 @@ function History() {
                                         variant="outlined"
                                         startIcon={<VideocamIcon />}
                                         onClick={() => handleOpenRecordings(e.meetingCode)}
-                                        sx={{ borderColor: "#bdc3c7", color: "#34495e" }}
+                                        sx={{ borderColor: "rgba(255,255,255,0.2)", color: "#f8fafc", fontWeight: 600, "&:hover": { borderColor: "#FF9839", color: "#FF9839" } }}
                                     >
                                         Recordings & Transcripts
                                     </Button>
