@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: ./ZBACKEND
+    container_name: voom_api
+    ports:
+      - "8000:8000"
+    environment:
+      - NODE_ENV=production
+      - PORT=8000
+      - MONGODB_URI=${MONGODB_URI}
+      - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - REDIS_URL=redis://redis:6379
+      - CORS_ORIGIN=http://localhost:3000
+      - LOG_LEVEL=info
+      - SERVICE_NAME=voom-api
+      - EMBEDDING_PROVIDER=mock
+      - TRANSCRIPTION_PROVIDER=mock-whisper
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8000/api/v1/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  worker:
+    build:
+      context: ./ZBACKEND
+    container_name: voom_worker
+    command: ["npm", "run", "worker"]
+    environment:
+      - NODE_ENV=production
+      - MONGODB_URI=${MONGODB_URI}
+      - REDIS_URL=redis://redis:6379
+      - LOG_LEVEL=info
+      - SERVICE_NAME=voom-worker
+      - EMBEDDING_PROVIDER=mock
+      - TRANSCRIPTION_PROVIDER=mock-whisper
+    depends_on:
+      api:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  redis:
+    image: redis:6.2-alpine
+    container_name: voom_redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build:
+      context: ./zfrontend
+      args:
+        - REACT_APP_API_URL=http://localhost:8000/api/v1
+        - REACT_APP_SOCKET_URL=http://localhost:8000
+    container_name: voom_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s

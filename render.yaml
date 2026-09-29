@@ -1,0 +1,82 @@
+services:
+  # -------------------------
+  # 1. Static Frontend
+  # -------------------------
+  - type: web
+    name: voom-frontend
+    env: static
+    buildCommand: "cd zfrontend && npm ci && npm run build"
+    staticPublishPath: "./zfrontend/build"
+    envVars:
+      - key: REACT_APP_SERVER_URL
+        value: "https://voom-api.onrender.com"
+      - key: REACT_APP_SOCKET_URL
+        value: "https://voom-api.onrender.com"
+      - key: REACT_APP_REALTIME_PROVIDER
+        value: "p2p"
+
+  # -------------------------
+  # 2. Node.js API Service
+  # -------------------------
+  - type: web
+    name: voom-api
+    env: node
+    buildCommand: "cd ZBACKEND && npm ci"
+    startCommand: "cd ZBACKEND && npm run start"
+    envVars:
+      - key: NODE_ENV
+        value: "production"
+      - key: PORT
+        value: "10000"
+      - key: CORS_ORIGIN
+        value: "https://voom-frontend.onrender.com"
+      - key: ACCESS_TOKEN_EXPIRES_IN
+        value: "15m"
+      - key: REFRESH_TOKEN_EXPIRES_IN
+        value: "7d"
+      - key: TRANSCRIPTION_PROVIDER
+        value: "assemblyai"
+      # The following must be securely set in the Render Dashboard (sync: false):
+      - key: MONGODB_URI
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: LIVEKIT_API_KEY
+        sync: false
+      - key: LIVEKIT_API_SECRET
+        sync: false
+      - key: DEEPGRAM_API_KEY
+        sync: false
+      - key: ASSEMBLYAI_API_KEY
+        sync: false
+
+  # -------------------------
+  # 3. Background Worker
+  # -------------------------
+  - type: worker
+    name: voom-worker
+    env: node
+    buildCommand: "cd ZBACKEND && npm ci"
+    startCommand: "cd ZBACKEND && npm run worker"
+    envVars:
+      - key: NODE_ENV
+        value: "production"
+      - key: TRANSCRIPTION_PROVIDER
+        value: "assemblyai"
+      # The following must be securely set in the Render Dashboard (sync: false):
+      - key: MONGODB_URI
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: DEEPGRAM_API_KEY
+        sync: false
+      - key: ASSEMBLYAI_API_KEY
+        sync: false

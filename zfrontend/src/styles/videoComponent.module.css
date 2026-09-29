@@ -1,0 +1,326 @@
+/* ==========================================================================
+   VOOM ACTIVE MEETING - REFINED DESIGN SYSTEM & LAYOUT
+   Colors: #0B1020 (base), #111827 (surface-1), #151B2D (surface-2), #1E293B (surface-3)
+   Accent: #6366F1 / #818CF8 (primary), #10B981 (success/live), #EF4444 (danger)
+   ========================================================================== */
+
+.meetVideoContainer {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    background-color: #0b1020;
+    background-image: 
+        radial-gradient(at 10% 20%, rgba(30, 41, 59, 0.4) 0px, transparent 50%),
+        radial-gradient(at 90% 80%, rgba(17, 24, 39, 0.6) 0px, transparent 50%);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    color: #e2e8f0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    user-select: none;
+}
+
+/* Meeting App Shell: Main horizontal flex splitting Video Stage & Side Drawers */
+.meetingBody {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+    width: 100%;
+    min-height: 0; /* Critical for flex child vertical containment */
+}
+
+/* Dynamic Video Stage - Resizes smoothly when chat or participant drawer opens */
+.stageArea {
+    flex: 1;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-width: 0;
+    padding: 16px 20px 84px 20px; /* Bottom padding gives breathing room for control dock */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+}
+
+@media (max-width: 768px) {
+    .stageArea {
+        padding: 8px 8px 80px 8px;
+    }
+}
+
+/* Stage Canvas - Focuses on the primary video or responsive grid */
+.stageCanvas {
+    flex: 1;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 16px;
+}
+
+/* Active Main Video Wrapper */
+.mainVideoWrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #060a14;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+}
+
+.mainVideoElement {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* Contain prevents faces from stretching */
+    background: #020617;
+}
+
+.mainVideoElementCover {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: #020617;
+}
+
+/* Participant Filmstrip: Bottom of Stage Area */
+.filmstripContainer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 4px 4px 4px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    max-width: 100%;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.filmstripContainer::-webkit-scrollbar {
+    height: 6px;
+}
+
+.filmstripContainer::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+/* Filmstrip Thumbnail Card */
+.filmstripCard {
+    position: relative;
+    flex-shrink: 0;
+    width: 180px;
+    height: 108px;
+    background: #111827;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.filmstripCard:hover {
+    transform: translateY(-2px);
+    border-color: rgba(99, 102, 241, 0.6);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.filmstripCard.activeSpeaker {
+    border-color: #10b981;
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+}
+
+.filmstripVideo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: #0b1020;
+}
+
+/* Floating Picture-in-Picture Self View */
+.floatingSelfView {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    width: 220px;
+    height: 132px;
+    background: #111827;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1.5px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+    z-index: 30;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: grab;
+}
+
+.floatingSelfView:hover {
+    transform: scale(1.03);
+    border-color: rgba(129, 140, 248, 0.8);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+}
+
+.selfVideoElement {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: #0b1020;
+    transform: scaleX(-1); /* Natural mirror preview for self camera */
+}
+
+/* Camera-Off Avatar State (Used across main stage, filmstrip, and self view) */
+.cameraOffAvatarBox {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+    color: #f8fafc;
+}
+
+.avatarInitialCircle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #ffffff;
+    box-shadow: 0 8px 24px rgba(79, 70, 229, 0.35);
+}
+
+.avatarInitialSmall {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+/* Floating Bottom Control Bar Dock */
+.controlBarDock {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 18px;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 40px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+}
+
+@media (max-width: 768px) {
+    .controlBarDock {
+        bottom: 12px;
+        width: calc(100% - 24px);
+        max-width: 460px;
+        gap: 6px;
+        padding: 6px 10px;
+        justify-content: space-around;
+        border-radius: 24px;
+    }
+}
+
+/* Meeting Side Drawer (Chat / Participants / Workspace) */
+.sideDrawer {
+    width: 360px;
+    max-width: 100vw;
+    height: 100%;
+    background: #0f172a;
+    border-left: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    flex-direction: column;
+    z-index: 50;
+    box-shadow: -8px 0 32px rgba(0, 0, 0, 0.4);
+    animation: slideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (max-width: 768px) {
+    .sideDrawer {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        max-width: 100%;
+        z-index: 60;
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+/* Chat Message Bubbles */
+.chatBubbleRemote {
+    max-width: 82%;
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    color: #f1f5f9;
+    border-radius: 14px 14px 14px 2px;
+    padding: 10px 14px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.chatBubbleSelf {
+    max-width: 82%;
+    background: #4338ca;
+    color: #ffffff;
+    border-radius: 14px 14px 2px 14px;
+    padding: 10px 14px;
+    box-shadow: 0 4px 12px rgba(67, 56, 202, 0.35);
+}
+
+/* Screen Sharing Active Banner */
+.screenShareBanner {
+    position: absolute;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 25;
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(59, 130, 246, 0.5);
+    backdrop-filter: blur(12px);
+    border-radius: 30px;
+    padding: 6px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}

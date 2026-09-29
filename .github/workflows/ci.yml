@@ -1,0 +1,74 @@
+name: Voom CI Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    # We use a single LTS version to mirror production (Alpine node:20)
+    strategy:
+      matrix:
+        node-version: [20.x]
+        
+    # Service containers to allow realistic regression testing without external mocking where possible
+    services:
+      redis:
+        image: redis:6.2-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: |
+          ZBACKEND/package-lock.json
+          zfrontend/package-lock.json
+
+    - name: Install Backend Dependencies
+      run: npm ci
+      working-directory: ./ZBACKEND
+
+    - name: Install Frontend Dependencies
+      run: npm ci
+      working-directory: ./zfrontend
+
+    - name: Install Test Dependencies
+      run: npm ci
+      working-directory: ./tests
+
+    - name: Build Frontend
+      run: npm run build
+      working-directory: ./zfrontend
+      env:
+        REACT_APP_API_URL: http://localhost:8000/api/v1
+        REACT_APP_SOCKET_URL: http://localhost:8000
+
+    - name: Run Backend Regression Tests
+      run: node run_all.mjs
+      working-directory: ./tests
+      env:
+        NODE_ENV: test
+        PORT: 8000
+        REDIS_URL: redis://localhost:6379
+        JWT_ACCESS_SECRET: test-secret-access
+        JWT_REFRESH_SECRET: test-secret-refresh
+        CORS_ORIGIN: http://localhost:3000
+        EMBEDDING_PROVIDER: mock
+        TRANSCRIPTION_PROVIDER: mock-whisper
+        # MONGODB_URI is safely omitted or configured for an ephemeral in-memory MongoDB inside the test scripts
