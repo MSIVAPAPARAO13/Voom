@@ -30,7 +30,10 @@ export default function MeetingStage({
     onSetSpotlightSocketId,
     presenterSocketId = null,
     presenterName = "",
-    activeSpeakerSocketId = null
+    activeSpeakerSocketId = null,
+    activeReactions = {},
+    raisedHands = [],
+    isHandRaised = false
 }) {
     const [copied, setCopied] = useState(false);
 
@@ -253,6 +256,47 @@ export default function MeetingStage({
                             )}
                         </div>
 
+                        {/* Hand Raised Indicator */}
+                        {isHandRaised && (
+                            <div
+                                style={{
+                                    position: 'absolute',
+                                    top: '20px',
+                                    right: '20px',
+                                    background: 'rgba(245, 158, 11, 0.95)',
+                                    color: '#ffffff',
+                                    padding: '6px 14px',
+                                    borderRadius: '20px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    boxShadow: '0 4px 16px rgba(245, 158, 11, 0.5)',
+                                    zIndex: 10
+                                }}
+                            >
+                                <span style={{ fontSize: '18px' }}>✋</span>
+                                <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.8rem' }}>Hand Raised</Typography>
+                            </div>
+                        )}
+
+                        {/* Floating Reaction Overlay */}
+                        {activeReactions['self'] && (
+                            <div
+                                style={{
+                                    position: 'absolute',
+                                    top: '50%',
+                                    left: '50%',
+                                    transform: 'translate(-50%, -50%)',
+                                    fontSize: '4.5rem',
+                                    zIndex: 20,
+                                    pointerEvents: 'none',
+                                    filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.6))'
+                                }}
+                            >
+                                {activeReactions['self']}
+                            </div>
+                        )}
+
                         {/* Glass Pill: Waiting for others to join */}
                         <div
                             style={{
@@ -384,6 +428,47 @@ export default function MeetingStage({
                                         <div className={styles.avatarInitialCircle}>
                                             {initials}
                                         </div>
+                                    </div>
+                                )}
+
+                                {/* Hand Raised Badge on Tile */}
+                                {((item.isSelf && isHandRaised) || raisedHands.includes(item.socketId) || item.isHandRaised) && (
+                                    <div
+                                        style={{
+                                            position: 'absolute',
+                                            top: '10px',
+                                            right: '10px',
+                                            background: 'rgba(245, 158, 11, 0.95)',
+                                            color: '#ffffff',
+                                            padding: '3px 8px',
+                                            borderRadius: '16px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '4px',
+                                            boxShadow: '0 4px 12px rgba(245, 158, 11, 0.4)',
+                                            zIndex: 10
+                                        }}
+                                    >
+                                        <span style={{ fontSize: '13px' }}>✋</span>
+                                        <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.68rem' }}>Raised</Typography>
+                                    </div>
+                                )}
+
+                                {/* Floating Reaction Overlay */}
+                                {(activeReactions[item.socketId] || (item.isSelf && activeReactions['self'])) && (
+                                    <div
+                                        style={{
+                                            position: 'absolute',
+                                            top: '50%',
+                                            left: '50%',
+                                            transform: 'translate(-50%, -50%)',
+                                            fontSize: '3.5rem',
+                                            zIndex: 20,
+                                            pointerEvents: 'none',
+                                            filter: 'drop-shadow(0 6px 16px rgba(0,0,0,0.6))'
+                                        }}
+                                    >
+                                        {activeReactions[item.socketId] || (item.isSelf && activeReactions['self'])}
                                     </div>
                                 )}
 

@@ -61,6 +61,10 @@ const meetingSchema = new Schema(
             allowRecording: {
                 type: Boolean,
                 default: true
+            },
+            isLocked: {
+                type: Boolean,
+                default: false
             }
         },
         startedAt: {

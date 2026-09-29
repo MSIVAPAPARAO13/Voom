@@ -84,6 +84,13 @@ export default function VideoMeetComponent() {
     const [presenterName, setPresenterName] = useState("");
     const [activeSpeakerSocketId, setActiveSpeakerSocketId] = useState(null);
 
+    // Meeting Engine 3.0: Reactions, Hand Raising & Security States
+    const [isHandRaised, setIsHandRaised] = useState(false);
+    const [raisedHands, setRaisedHands] = useState([]);
+    const [activeReactions, setActiveReactions] = useState({});
+    const [isMeetingLocked, setIsMeetingLocked] = useState(false);
+    const [infoDialogOpen, setInfoDialogOpen] = useState(false);
+
     // Lobby & Meeting Info States
     const [askForUsername, setAskForUsername] = useState(true);
     const [username, setUsername] = useState(userData?.name || userData?.username || "");
@@ -175,6 +182,15 @@ export default function VideoMeetComponent() {
                 }
                 if (data.isHost) {
                     setIsHost(true);
+                } else if (userData && data.createdBy) {
+                    const hostId = data.createdBy._id || data.createdBy.id || data.createdBy;
+                    const hostUsername = data.createdBy.username || data.user_id;
+                    if (
+                        (hostId && String(hostId) === String(userData.id || userData._id)) ||
+                        (hostUsername && hostUsername === userData.username)
+                    ) {
+                        setIsHost(true);
+                    }
                 }
 
                 // Phase 7: Restore active recording if one exists
@@ -214,7 +230,21 @@ export default function VideoMeetComponent() {
             }
         };
         fetchMeetingAndWorkspace();
-    }, [meetingCode]);
+    }, [meetingCode, userData]);
+
+    useEffect(() => {
+        if (userData && meetingDetails && !isHost) {
+            const hostId = meetingDetails.createdBy?._id || meetingDetails.createdBy?.id || meetingDetails.createdBy;
+            const hostUsername = meetingDetails.createdBy?.username || meetingDetails.user_id;
+            if (
+                (hostId && String(hostId) === String(userData.id || userData._id)) ||
+                (hostUsername && hostUsername === userData.username) ||
+                meetingDetails.isHost
+            ) {
+                setIsHost(true);
+            }
+        }
+    }, [userData, meetingDetails, isHost]);
 
     // Phase 7: Resilient Recording Timer (derived from server startedAt)
     useEffect(() => {
@@ -965,6 +995,99 @@ export default function VideoMeetComponent() {
                     localVideoref.current.srcObject.getVideoTracks().forEach(t => t.enabled = false);
                 }
             });
+
+            // Reactions listener
+            socketRef.current.on('meeting:reaction-received', (data) => {
+                const targetKey = data.senderSocketId === socketIdRef.current ? 'self' : data.senderSocketId;
+                setActiveReactions(prev => ({ ...prev, [targetKey]: data.emoji }));
+                setTimeout(() => {
+                    setActiveReactions(prev => {
+                        const copy = { ...prev };
+                        delete copy[targetKey];
+                        return copy;
+                    });
+                }, 3500);
+            });
+
+            // Hand raising listeners
+            socketRef.current.on('meeting:hand-raised', (data) => {
+                setRaisedHands(prev => prev.includes(data.socketId) ? prev : [...prev, data.socketId]);
+            });
+
+            socketRef.current.on('meeting:hand-lowered', (data) => {
+                setRaisedHands(prev => prev.filter(id => id !== data.socketId));
+                if (data.socketId === socketIdRef.current) {
+                    setIsHandRaised(false);
+                }
+            });
+
+            // Meeting Lock listeners
+            socketRef.current.on('meeting:lock-status', (data) => {
+                setIsMeetingLocked(data.isLocked);
+            });
+
+            socketRef.current.on('meeting:locked', (data) => {
+                alert(data?.message || "This meeting has been locked by the host.");
+                leaveCall();
+            });
+    };
+
+    const handleSendReaction = (emoji) => {
+        if (socketRef.current) {
+            socketRef.current.emit("meeting:reaction", { meetingCode, emoji });
+        }
+        setActiveReactions(prev => ({ ...prev, self: emoji }));
+        setTimeout(() => {
+            setActiveReactions(prev => {
+                const copy = { ...prev };
+                delete copy.self;
+                return copy;
+            });
+        }, 3500);
+    };
+
+    const handleToggleRaiseHand = () => {
+        const next = !isHandRaised;
+        setIsHandRaised(next);
+        if (socketRef.current) {
+            if (next) {
+                socketRef.current.emit("meeting:raise-hand", { meetingCode });
+            } else {
+                socketRef.current.emit("meeting:lower-hand", { meetingCode });
+            }
+        }
+    };
+
+    const handleToggleMeetingLock = () => {
+        const next = !isMeetingLocked;
+        setIsMeetingLocked(next);
+        if (socketRef.current) {
+            socketRef.current.emit("meeting:toggle-lock", { meetingCode, isLocked: next });
+        }
+    };
+
+    const handleToggleWaitingRoom = () => {
+        const next = !meetingSettings.waitingRoomEnabled;
+        setMeetingSettings(prev => ({ ...prev, waitingRoomEnabled: next }));
+        if (socketRef.current) {
+            socketRef.current.emit("meeting:update-settings", { meetingCode, settings: { ...meetingSettings, waitingRoomEnabled: next } });
+        }
+    };
+
+    const handleToggleAllowChat = () => {
+        const next = !meetingSettings.allowChat;
+        setMeetingSettings(prev => ({ ...prev, allowChat: next }));
+        if (socketRef.current) {
+            socketRef.current.emit("meeting:update-settings", { meetingCode, settings: { ...meetingSettings, allowChat: next } });
+        }
+    };
+
+    const handleToggleAllowScreenShare = () => {
+        const next = !meetingSettings.allowScreenShare;
+        setMeetingSettings(prev => ({ ...prev, allowScreenShare: next }));
+        if (socketRef.current) {
+            socketRef.current.emit("meeting:update-settings", { meetingCode, settings: { ...meetingSettings, allowScreenShare: next } });
+        }
     };
 
     const connect = () => {
@@ -1464,6 +1587,9 @@ export default function VideoMeetComponent() {
                             presenterSocketId={presenterSocketId}
                             presenterName={presenterName}
                             activeSpeakerSocketId={activeSpeakerSocketId}
+                            activeReactions={activeReactions}
+                            raisedHands={raisedHands}
+                            isHandRaised={isHandRaised}
                         />
 
                         {/* In-Meeting Chat Drawer (Slide-out) */}
@@ -1831,6 +1957,10 @@ export default function VideoMeetComponent() {
                         isRecording={isRecording}
                         isFinalizingRecording={isFinalizingRecording}
                         allowRecording={meetingSettings.allowRecording}
+                        isHandRaised={isHandRaised}
+                        isMeetingLocked={isMeetingLocked}
+                        waitingRoomEnabled={meetingSettings.waitingRoomEnabled}
+                        allowChat={meetingSettings.allowChat}
                         onToggleAudio={handleAudio}
                         onToggleVideo={handleVideo}
                         onToggleScreen={handleScreen}
@@ -1840,8 +1970,60 @@ export default function VideoMeetComponent() {
                         onStartRecording={handleStartRecording}
                         onStopRecording={handleStopRecording}
                         onOpenSettings={() => setSettingsDialogOpen(true)}
+                        onSendReaction={handleSendReaction}
+                        onToggleRaiseHand={handleToggleRaiseHand}
+                        onToggleMeetingLock={handleToggleMeetingLock}
+                        onToggleWaitingRoom={handleToggleWaitingRoom}
+                        onToggleAllowChat={handleToggleAllowChat}
+                        onToggleAllowScreenShare={handleToggleAllowScreenShare}
+                        onOpenInfo={() => setInfoDialogOpen(true)}
                         onEndCall={handleEndCall}
                     />
+
+                    {/* Meeting Info Dialog */}
+                    <Dialog
+                        open={infoDialogOpen}
+                        onClose={() => setInfoDialogOpen(false)}
+                        slotProps={{
+                            paper: {
+                                sx: {
+                                    bgcolor: '#0f172a',
+                                    color: '#f8fafc',
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    borderRadius: '16px',
+                                    p: 1,
+                                    minWidth: 340
+                                }
+                            }
+                        }}
+                    >
+                        <DialogTitle sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <span>Meeting Information</span>
+                            <IconButton size="small" onClick={() => setInfoDialogOpen(false)} sx={{ color: '#94a3b8' }}>
+                                <CloseIcon fontSize="small" />
+                            </IconButton>
+                        </DialogTitle>
+                        <DialogContent>
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mt: 1 }}>
+                                <Typography variant="caption" sx={{ color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>Meeting Title</Typography>
+                                <Typography variant="body1" sx={{ fontWeight: 600, color: '#f8fafc' }}>{meetingDetails?.title || "Live Meeting"}</Typography>
+                                
+                                <Typography variant="caption" sx={{ color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600, mt: 1 }}>Meeting Code</Typography>
+                                <Typography variant="h6" sx={{ fontWeight: 700, color: '#FF9839', letterSpacing: 1 }}>{meetingCode}</Typography>
+                                
+                                <Typography variant="caption" sx={{ color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600, mt: 1 }}>Direct Join URL</Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1, bgcolor: 'rgba(255,255,255,0.04)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                                    <Typography variant="body2" sx={{ color: '#cbd5e1', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{window.location.href}</Typography>
+                                    <Button size="small" variant="contained" onClick={() => { navigator.clipboard.writeText(window.location.href); alert("Meeting link copied!"); }} sx={{ textTransform: 'none', bgcolor: '#4f46e5' }}>Copy</Button>
+                                </Box>
+                                
+                                <Typography variant="caption" sx={{ color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600, mt: 1 }}>Security Status</Typography>
+                                <Typography variant="body2" sx={{ color: isMeetingLocked ? '#f87171' : '#34d399', fontWeight: 600 }}>
+                                    {isMeetingLocked ? "🔒 Meeting is Locked (No new joins)" : "🔓 Meeting is Open"}
+                                </Typography>
+                            </Box>
+                        </DialogContent>
+                    </Dialog>
 
                     {/* 4. Host Settings Dialog */}
                     <MeetingSettingsDialog

@@ -1,9 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     IconButton,
     Tooltip,
     Badge,
-    CircularProgress
+    CircularProgress,
+    Popover,
+    Box,
+    Typography,
+    Menu,
+    MenuItem,
+    ListItemIcon,
+    ListItemText,
+    Switch
 } from '@mui/material';
 import MicIcon from '@mui/icons-material/Mic';
 import MicOffIcon from '@mui/icons-material/MicOff';
@@ -18,7 +26,15 @@ import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 import StopCircleIcon from '@mui/icons-material/StopCircle';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import CallEndIcon from '@mui/icons-material/CallEnd';
+import AddReactionOutlinedIcon from '@mui/icons-material/AddReactionOutlined';
+import PanToolOutlinedIcon from '@mui/icons-material/PanToolOutlined';
+import SecurityOutlinedIcon from '@mui/icons-material/SecurityOutlined';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import MeetingRoomOutlinedIcon from '@mui/icons-material/MeetingRoomOutlined';
 import styles from '../../styles/videoComponent.module.css';
+
+const REACTION_EMOJIS = ["👍", "❤️", "😂", "👏", "🎉", "😮"];
 
 export default function MeetingControls({
     video = true,
@@ -35,6 +51,10 @@ export default function MeetingControls({
     isRecording = false,
     isFinalizingRecording = false,
     allowRecording = true,
+    isHandRaised = false,
+    isMeetingLocked = false,
+    waitingRoomEnabled = false,
+    allowChat = true,
     onToggleAudio,
     onToggleVideo,
     onToggleScreen,
@@ -44,8 +64,18 @@ export default function MeetingControls({
     onStartRecording,
     onStopRecording,
     onOpenSettings,
+    onSendReaction,
+    onToggleRaiseHand,
+    onToggleMeetingLock,
+    onToggleWaitingRoom,
+    onToggleAllowChat,
+    onToggleAllowScreenShare,
+    onOpenInfo,
     onEndCall
 }) {
+    const [reactionAnchorEl, setReactionAnchorEl] = useState(null);
+    const [securityAnchorEl, setSecurityAnchorEl] = useState(null);
+
     // Button styling tokens
     const normalBtnStyle = {
         color: '#f1f5f9',
@@ -71,6 +101,20 @@ export default function MeetingControls({
         transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
         '&:hover': {
             bgcolor: '#4338ca',
+            transform: 'translateY(-2px)'
+        }
+    };
+
+    const goldenActiveBtnStyle = {
+        color: '#ffffff',
+        bgcolor: '#d97706',
+        border: '1px solid #f59e0b',
+        width: 44,
+        height: 44,
+        boxShadow: '0 4px 14px rgba(245, 158, 11, 0.4)',
+        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+        '&:hover': {
+            bgcolor: '#b45309',
             transform: 'translateY(-2px)'
         }
     };
@@ -103,6 +147,13 @@ export default function MeetingControls({
             transform: 'translateY(-2px)',
             boxShadow: '0 6px 20px rgba(225, 29, 72, 0.6)'
         }
+    };
+
+    const handleReactionClick = (emoji) => {
+        if (onSendReaction) {
+            onSendReaction(emoji);
+        }
+        setReactionAnchorEl(null);
     };
 
     return (
@@ -149,7 +200,64 @@ export default function MeetingControls({
             {/* Divider */}
             <div style={{ width: 1, height: 26, background: 'rgba(255, 255, 255, 0.15)', margin: '0 4px' }} />
 
-            {/* 4. Chat Toggle */}
+            {/* 4. Reactions Button */}
+            <Tooltip title="Reactions">
+                <IconButton
+                    onClick={(e) => setReactionAnchorEl(e.currentTarget)}
+                    aria-label="Reactions"
+                    sx={normalBtnStyle}
+                >
+                    <AddReactionOutlinedIcon sx={{ fontSize: 20 }} />
+                </IconButton>
+            </Tooltip>
+            <Popover
+                open={Boolean(reactionAnchorEl)}
+                anchorEl={reactionAnchorEl}
+                onClose={() => setReactionAnchorEl(null)}
+                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                transformOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                PaperProps={{
+                    sx: {
+                        bgcolor: '#1e293b',
+                        borderRadius: '24px',
+                        p: 0.75,
+                        display: 'flex',
+                        gap: 1,
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+                        mb: 1.5
+                    }
+                }}
+            >
+                {REACTION_EMOJIS.map((emoji) => (
+                    <IconButton
+                        key={emoji}
+                        size="small"
+                        onClick={() => handleReactionClick(emoji)}
+                        sx={{
+                            fontSize: '1.4rem',
+                            p: 0.5,
+                            transition: 'transform 0.15s ease',
+                            '&:hover': { transform: 'scale(1.3)', bgcolor: 'rgba(255, 255, 255, 0.1)' }
+                        }}
+                    >
+                        {emoji}
+                    </IconButton>
+                ))}
+            </Popover>
+
+            {/* 5. Raise Hand Toggle */}
+            <Tooltip title={isHandRaised ? "Lower hand" : "Raise hand"}>
+                <IconButton
+                    onClick={onToggleRaiseHand}
+                    aria-label={isHandRaised ? "Lower hand" : "Raise hand"}
+                    sx={isHandRaised ? goldenActiveBtnStyle : normalBtnStyle}
+                >
+                    <PanToolOutlinedIcon sx={{ fontSize: 20 }} />
+                </IconButton>
+            </Tooltip>
+
+            {/* 6. Chat Toggle */}
             <Tooltip title={showChat ? "Close chat" : "Open chat"}>
                 <IconButton
                     onClick={onToggleChat}
@@ -162,7 +270,7 @@ export default function MeetingControls({
                 </IconButton>
             </Tooltip>
 
-            {/* 5. Participants Toggle */}
+            {/* 7. Participants Toggle */}
             <Tooltip title={showParticipants ? "Hide participants" : "Show participants"}>
                 <IconButton
                     onClick={onToggleParticipants}
@@ -175,7 +283,81 @@ export default function MeetingControls({
                 </IconButton>
             </Tooltip>
 
-            {/* 6. Collaboration Workspace Toggle */}
+            {/* 8. Host Security Menu */}
+            {isHost && (
+                <>
+                    <Tooltip title="Security controls">
+                        <IconButton
+                            onClick={(e) => setSecurityAnchorEl(e.currentTarget)}
+                            aria-label="Security controls"
+                            sx={isMeetingLocked ? activeBtnStyle : normalBtnStyle}
+                        >
+                            <SecurityOutlinedIcon sx={{ fontSize: 20 }} />
+                        </IconButton>
+                    </Tooltip>
+                    <Menu
+                        open={Boolean(securityAnchorEl)}
+                        anchorEl={securityAnchorEl}
+                        onClose={() => setSecurityAnchorEl(null)}
+                        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                        transformOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                        PaperProps={{
+                            sx: {
+                                bgcolor: '#111827',
+                                color: '#f8fafc',
+                                border: '1px solid rgba(255, 255, 255, 0.12)',
+                                borderRadius: '12px',
+                                minWidth: 260,
+                                mb: 1.5,
+                                p: 1
+                            }
+                        }}
+                    >
+                        <Box sx={{ px: 2, py: 1, borderBottom: '1px solid rgba(255, 255, 255, 0.08)', mb: 1 }}>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#f8fafc' }}>
+                                Host Security Controls
+                            </Typography>
+                        </Box>
+                        <MenuItem onClick={onToggleMeetingLock}>
+                            <ListItemIcon sx={{ color: isMeetingLocked ? '#ef4444' : '#94a3b8' }}>
+                                <LockOutlinedIcon fontSize="small" />
+                            </ListItemIcon>
+                            <ListItemText primary="Lock Meeting" secondary={isMeetingLocked ? "New attendees blocked" : "Open for join"} secondaryTypographyProps={{ sx: { fontSize: '0.72rem', color: '#64748b' } }} />
+                            <Switch checked={isMeetingLocked} size="small" />
+                        </MenuItem>
+                        <MenuItem onClick={onToggleWaitingRoom}>
+                            <ListItemIcon sx={{ color: waitingRoomEnabled ? '#3b82f6' : '#94a3b8' }}>
+                                <MeetingRoomOutlinedIcon fontSize="small" />
+                            </ListItemIcon>
+                            <ListItemText primary="Waiting Room" secondary={waitingRoomEnabled ? "Admission required" : "Direct join"} secondaryTypographyProps={{ sx: { fontSize: '0.72rem', color: '#64748b' } }} />
+                            <Switch checked={waitingRoomEnabled} size="small" />
+                        </MenuItem>
+                        <MenuItem onClick={onToggleAllowScreenShare}>
+                            <ListItemText inset primary="Allow Screen Share" />
+                            <Switch checked={allowScreenShare} size="small" />
+                        </MenuItem>
+                        <MenuItem onClick={onToggleAllowChat}>
+                            <ListItemText inset primary="Allow Room Chat" />
+                            <Switch checked={allowChat} size="small" />
+                        </MenuItem>
+                    </Menu>
+                </>
+            )}
+
+            {/* 9. Meeting Info Button */}
+            {onOpenInfo && (
+                <Tooltip title="Meeting info">
+                    <IconButton
+                        onClick={onOpenInfo}
+                        aria-label="Meeting info"
+                        sx={normalBtnStyle}
+                    >
+                        <InfoOutlinedIcon sx={{ fontSize: 20 }} />
+                    </IconButton>
+                </Tooltip>
+            )}
+
+            {/* 10. Collaboration Workspace Toggle */}
             {onToggleWorkspace && (
                 <Tooltip title={showWorkspace ? "Close workspace" : "Open workspace (Notes, Tasks, Agenda)"}>
                     <IconButton
@@ -188,7 +370,7 @@ export default function MeetingControls({
                 </Tooltip>
             )}
 
-            {/* 7. Recording Control (Host Only) */}
+            {/* 11. Recording Control (Host Only) */}
             {isHost && allowRecording && (
                 <Tooltip title={isRecording ? "Stop recording" : isFinalizingRecording ? "Finalizing recording..." : "Start recording"}>
                     <span>
@@ -210,7 +392,7 @@ export default function MeetingControls({
                 </Tooltip>
             )}
 
-            {/* 8. Settings (Host Only) */}
+            {/* 12. Settings (Host Only) */}
             {isHost && onOpenSettings && (
                 <Tooltip title="Meeting settings">
                     <IconButton
@@ -226,7 +408,7 @@ export default function MeetingControls({
             {/* Divider */}
             <div style={{ width: 1, height: 26, background: 'rgba(255, 255, 255, 0.15)', margin: '0 4px' }} />
 
-            {/* 9. Leave Call (Destructive distinct action) */}
+            {/* 13. Leave Call */}
             <Tooltip title="Leave meeting">
                 <IconButton
                     onClick={onEndCall}

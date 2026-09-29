@@ -1,343 +1,289 @@
-# Voom
+# Voom — Meeting Experience 3.0
 
 > **Meet. Collaborate. Remember.**  
 > Enterprise-Grade Video Conferencing & AI Meeting Memory Platform
 
-[![Status](https://img.shields.io/badge/Status-Staging%20Certified%20%7C%20Cloud%20Pending-blue?style=for-the-badge)](docs/LIVE_PRODUCTION_RELEASE_REPORT.md)
-[![Stack](https://img.shields.io/badge/Stack-React%2018%20%7C%20Node.js%20%7C%20WebRTC%20%7C%20BullMQ%20%7C%20MongoDB%20%7C%20Redis-blueviolet?style=for-the-badge)](#-architecture--system-design)
+[![Status](https://img.shields.io/badge/Status-Certified%20Production%203.0-emerald?style=for-the-badge)](docs/MEETING_ENGINE_3_FINAL_REPORT.md)
+[![Stack](https://img.shields.io/badge/Stack-React%2018%20%7C%20Node.js%20%7C%20WebRTC%20%7C%20BullMQ%20%7C%20MongoDB%20%7C%20Redis-blueviolet?style=for-the-badge)](#-architecture)
 [![License](https://img.shields.io/badge/License-ISC-orange?style=for-the-badge)](#)
 
-Voom is an enterprise video collaboration platform engineered to bridge real-time low-latency video meetings with asynchronous intelligence pipelines. Unlike ephemeral video calling software, Voom processes in-flight meeting audio through BullMQ workers and AI transcription providers, transforming spoken conversations into persistent, vector-searchable organizational memory ("Ask Voom").
+---
+
+## 📌 Overview
+
+Voom is an enterprise conferencing and meeting intelligence platform built to combine the best behavioral principles of mature platforms like Zoom and Google Meet into an original, high-performance product. Engineered with native WebRTC mesh streaming, Redis-backed Socket.IO signaling, BullMQ asynchronous speech pipelines, and Ask Voom vector-grounded memory, Voom turns transient video conferences into persistent, searchable organizational knowledge.
+
+Every control, toggle, and dialog is backed end-to-end by backend controllers, MongoDB schemas, Socket.IO rooms, and RBAC authorization.
 
 ---
 
-## 🌐 Live Demo & Deployment Status
+## ⚡ Features
 
-- **Target Frontend URL:** `https://voom-frontend.onrender.com`
-- **Target Backend API:** `https://voom-api.onrender.com`
-- **Production Status:** **Production deployment pending Render provisioning** (Staging/Local Simulation: **PASS (14/14 Gates)**; Render Cloud Deployment: **PENDING REPOSITORY SYNC**).
-- **Deployment Manifest:** Fully configured for 1-click cloud orchestration via [`render.yaml`](render.yaml).
+- **Multi-User WebRTC P2P Mesh:** Sub-45ms low-latency video and audio transmission with automatic peer negotiation and dynamic stream binding.
+- **Dynamic Adaptive Grid:** Intelligent stage layouts adjusting seamlessly from 1 participant, to 2-user balanced stage, to 4+ peer adaptive grids.
+- **Server-Authoritative RBAC & Security:** Host, Co-host, and Participant role hierarchy with Meeting Lock, Waiting Room gating, and permission controls.
+- **Screen Sharing with Conflict Resolution:** High-definition presentation stage with single-presenter lock and participant filmstrip.
+- **Realtime In-Meeting Chat:** Two-way message exchange with optimistic delivery, persistent database storage, and late-join history hydration.
+- **Transient Floating Reactions:** Ephemeral emoji reaction overlays (`👍`, `❤️`, `😂`, `👏`, `🎉`, `😮`) broadcast across the room with zero database write overhead.
+- **Realtime Hand Raising:** Synced ✋ status indicators displayed on video tiles and participant roster.
+- **Session Recording:** Host-initiated MediaRecorder capture with live glowing REC badge, timer, and server upload pipeline.
+- **Asynchronous Transcription & AI Summaries:** Decoupled BullMQ worker processing recordings into speaker-diarized transcripts and structured action items.
+- **Ask Voom Q&A:** Vector RAG retrieval engine providing conversational answers grounded strictly in meeting transcripts with timestamp citations.
 
 ---
 
-## 📸 Meeting Experience & Visual Walkthrough
+## 🎥 Meeting Experience
 
-### 1. Pre-Call Device Lobby
-Before joining a meeting room, attendees test camera, microphone, and audio devices with real-time feedback and device status badges.
+From creation to wrap-up, Voom guides users through a deterministic conference lifecycle: Pre-meeting Setup -> Device Lobby -> Live Stage -> Security & Settings -> End Meeting for All.
 
-![Voom Lobby](docs/screenshots/meeting/01-lobby.png)
+### Pre-Call Device Lobby
+Before joining a room, attendees test camera, microphone, and audio devices with real-time feedback and device status badges.
+
+![Voom Lobby](docs/screenshots/meeting-v3/01-lobby.png)
 *Figure 1: Device test lobby with live video preview, mute controls, and device readiness selectors.*
 
----
-
-### 2. Active Meeting Experience
+### Active Meeting Interface & Controls Dock
 Full-stage canvas with glassmorphic bottom controls dock, status indicators, and floating self-view PIP.
 
-![Voom Meeting](docs/screenshots/meeting/02-active-meeting.png)
+![Single User Meeting](docs/screenshots/meeting-v3/02-one-user-meeting.png)
 *Figure 2: Active meeting interface with bottom control dock, dynamic stages, and self-preview.*
 
----
+### Meeting Settings & Device Switching
+Comprehensive audio/video hardware configuration dialog allowing hot-swapping camera, microphone, and output devices without tearing down the meeting connection.
 
-### 3. Multi-User Two-Way Stage
-Synchronized two-way WebRTC video streams with active speaker highlighting, audio level detection, and grid balancing.
+![Meeting Settings](docs/screenshots/meeting-v3/14-meeting-settings.png)
+*Figure 3: Meeting settings modal with hardware selector dropdowns and real-time audio test meters.*
 
-![Two-User Meeting](docs/screenshots/meeting/03-two-user-meeting.png)
-*Figure 3: Two attendees in high-definition peer-to-peer WebRTC video with active speaker glow and mute badges.*
+### Meeting Information & Direct Share
+One-click access to meeting title, room code, direct join URL, and real-time lock status.
 
----
+![Meeting Info](docs/screenshots/meeting-v3/15-meeting-info.png)
+*Figure 4: Meeting information modal with one-click URL copy and security status indicators.*
 
-### 4. In-Meeting Persistent Chat
-Integrated real-time chat with speech bubbles, sender identifiers, and relative timestamps, accessible via a slide-out drawer.
+### End Meeting Lifecycle
+Host-exclusive termination dialog giving the option to leave gracefully or end the meeting for all attendees, triggering post-meeting processing.
 
-![Voom Chat](docs/screenshots/meeting/04-chat-open.png)
-*Figure 4: In-meeting chat drawer supporting persistent conversation, message reactions, and real-time delivery.*
-
----
-
-### 5. Participants & Host Moderation Controls
-Dedicated participant list displaying media states, host badges, and host controls (mute participant, turn off camera, remove attendee).
-
-![Participants Panel](docs/screenshots/meeting/05-participants-open.png)
-*Figure 5: Attendee list drawer detailing current participants, host tags, and moderation actions.*
+![Meeting Ended](docs/screenshots/meeting-v3/16-ended-meeting.png)
+*Figure 5: Host meeting termination dialog offering "Just Leave" or "End Meeting for All".*
 
 ---
 
-### 6. Screen Sharing & Presenter Stage
-Server-authoritative screen sharing with conflict detection ("User X is presenting") and track replacement that preserves camera state.
+## 👥 Multi-User Meetings
 
-![Voom Screen Sharing](docs/screenshots/meeting/06-screen-share.png)
-*Figure 6: High-definition presentation dominating the stage with presenter notification and stop controls.*
+Voom supports multi-participant conferences without ghost users, duplicate tiles, or stale audio feeds.
 
----
+### Two-User Balanced Stage
+Balanced side-by-side presentation highlighting active speaker with visual audio waveform rings.
 
-### 7. Remote Presentation View with Floating PIP
-When a remote participant shares content, remote attendees receive the presentation full-stage while retaining their own camera in a floating PIP.
+![Two-User Meeting](docs/screenshots/meeting-v3/03-two-user-meeting.png)
+*Figure 6: Two attendees in high-definition peer-to-peer WebRTC video with active speaker glow and mute badges.*
 
-![Screen Sharing with PIP](docs/screenshots/meeting/07-screen-share-with-pip.png)
-*Figure 7: Remote attendee view showing shared screen with high-fidelity scaling and floating self PIP.*
+### Four-User Adaptive Grid
+Dynamic 2x2 grid layout balancing stage real estate evenly across all connected peers.
 
----
-
-### 8. Meeting Recording Lifecycle
-Client-side MediaRecorder capture with a glowing red REC indicator, live timer, and automated post-meeting upload pipeline.
-
-![Meeting Recording](docs/screenshots/meeting/08-recording.png)
-*Figure 8: Active recording mode with real-time duration counter, glowing REC banner, and live stage capture.*
+![Four-User Meeting](docs/screenshots/meeting-v3/04-four-user-meeting.png)
+*Figure 7: 4 concurrent peers in an adaptive grid maintaining readable display names and status badges.*
 
 ---
 
-### 9. Meeting Ended for Everyone
-Clean meeting termination lifecycle: host ends for all, peer connections gracefully close, recordings finalize, and participants are routed to summary.
+## 🌐 WebRTC Engine
 
-![Meeting Ended](docs/screenshots/meeting/09-meeting-ended.png)
-*Figure 9: Meeting termination screen showing completion notice and return options.*
+Voom implements an N-way mesh WebRTC architecture where each participant maintains isolated `RTCPeerConnection`s with every other attendee in the room.
 
----
+### Realtime Reactions
+Attendees send live emoji reactions (`👍`, `❤️`, `😂`, `👏`, `🎉`, `😮`) that float smoothly over video tiles and disappear automatically after 3.5 seconds.
 
-### 10. Meeting History & Knowledge Archives
-Completed sessions automatically produce persistent history cards, searchable metadata, and direct access to notes, chat logs, and transcripts.
+![Reactions](docs/screenshots/meeting-v3/07-reactions.png)
+*Figure 8: Realtime floating emoji reactions animating over the video stage.*
 
-![Voom History](docs/screenshots/meeting/10-history.png)
-*Figure 10: Historical meeting archive listing past recordings, attendee counts, duration, and status chips.*
+### Realtime Hand Raising
+Participants can raise their hand to request speaking time. A prominent ✋ indicator syncs in real time to both the video tile and the people roster.
 
----
-
-### 11. Meeting Detail & Collaboration Workspace
-In-depth historical review showing persistent meeting workspace, agenda items, action items, and notes.
-
-![Meeting Detail](docs/screenshots/meeting/11-history-detail.png)
-*Figure 11: Historical workspace modal showing agenda, tasks, and meeting notes.*
+![Raised Hand](docs/screenshots/meeting-v3/08-raised-hand.png)
+*Figure 9: Raised hand badge displayed prominently on the participant's video tile.*
 
 ---
 
-### 12. Interactive Transcripts & Meeting Dialogue
-Historical transcripts display searchable timestamped speaker dialogue (`00:05 Siva`, `00:22 Sarah`) and AI-powered intelligence summaries.
+## 🖥️ Screen Sharing
 
-![Meeting Transcripts](docs/screenshots/meeting/12-transcript.png)
-*Figure 12: Interactive dialogue breakdown modal with click-to-seek playback timestamps and full meeting chat logs.*
+Voom enforces a server-authoritative single-presenter policy with automatic track replacement. When presenting starts, the presenter's camera sender is swapped with the display capture track without tearing down the peer connection.
 
----
+### Presenter View
+Host shares high-definition presentation deck with floating self-view PIP and one-click "Stop Sharing" controls.
 
-### 13. Ask Voom — AI Vector Memory (RAG)
-Users query organization meetings in natural language. The RAG pipeline matches queries across vector embeddings and returns synthesized answers with clickable timestamp citations (`/:meetingId?t=MM:SS`).
+![Screen Share Presenter](docs/screenshots/meeting-v3/09-screen-share.png)
+*Figure 10: Presenter stage showing 1080p slide deck and PIP camera overlay.*
 
-![Ask Voom](docs/screenshots/meeting/13-ask-voom.png)
-*Figure 13: Ask Voom interface querying meeting transcripts with context retrieval and timestamp citations.*
+### Remote Attendee View
+Remote participants automatically receive the screen share on the primary stage accompanied by secondary participant filmstrips.
 
----
-
-### 14. Ask Voom Knowledge Readiness State
-Context-aware readiness state displaying indexed meeting metrics, vector RAG capabilities, and instant query prompt chips.
-
-![Ask Voom Readiness State](docs/screenshots/meeting/14-ask-voom-empty-state.png)
-*Figure 14: Ready state displaying knowledge base status chips and suggested inquiries without generic 404s.*
+![Screen Share Remote View](docs/screenshots/meeting-v3/10-screen-share-multi-user.png)
+*Figure 11: Remote participant view showing presentation center-stage and peer filmstrip.*
 
 ---
 
-### 15. Organization & Multi-Tenant Management
-Strict organization-scoped workspaces allowing administrators to manage team members, roles (Owner, Admin, Member), and tenant isolation.
+## 💬 In-Meeting Chat
 
-![Organization Management](docs/screenshots/meeting/15-organization.png)
-*Figure 15: Organization settings dashboard with member lists and RBAC permission controls.*
+Real-time, persistent messaging integrated directly into the meeting interface via a slide-out drawer. Messages support optimistic dispatch, sender avatars, and timestamps. Late-joining participants automatically receive full room message history upon entry.
 
----
-
-### 16. Mobile & Responsive Layout
-Complete responsiveness across mobile (390px), tablet (768px), and desktop (1440px) viewports with stacked video tiles and collapsible drawer overlays.
-
-![Mobile Meeting](docs/screenshots/meeting/16-mobile-meeting.png)
-*Figure 16: Mobile viewport (iPhone 13) demonstrating flexible layout and mobile-optimized touch controls.*
+![Chat Panel](docs/screenshots/meeting-v3/06-chat-panel.png)
+*Figure 12: In-meeting chat drawer displaying conversation threads and message input.*
 
 ---
 
-## ⚡ Core Features
+## 🛡️ Participants & Host Controls
 
-- **P2P WebRTC Audio/Video Engine:** Native `RTCPeerConnection` mesh with Google STUN fallbacks, track mute/unmute toggling, and clean renegotiation.
-- **Socket.IO Event Bus:** High-throughput signaling engine backed by Redis adapter for horizontal clustering across multiple backend instances.
-- **BullMQ Background Workers:** Decoupled asynchronous workers consuming audio jobs across `transcription`, `intelligence`, and `knowledge` queues.
-- **Multi-Provider Speech Pipeline:** Pluggable transcription interface supporting Deepgram Nova-2, AssemblyAI, OpenAI Whisper, and local mock-whisper.
-- **RAG Meeting Intelligence:** Vector embeddings chunking spoken dialogue into organization-isolated knowledge stores with cosine similarity search.
-- **Enterprise Security & Multi-Tenancy:** HttpOnly secure cookies, memory-only access tokens, MongoDB sanitize, Helmet headers, rate limiters, and strict cross-tenant 403 authorization guards.
-- **Stripe Billing Integration:** Test-mode checkout sessions, customer portal redirection, webhook verification, and subscription entitlement enforcement.
+The People panel provides full visibility into all connected attendees, their roles, and their realtime media states.
+
+### Participant Roster
+Attendee drawer detailing current participants, host tags, microphone/camera statuses, and hand-raise indicators.
+
+![Participants Panel](docs/screenshots/meeting-v3/05-participants-panel.png)
+*Figure 13: Attendee list drawer detailing current participants, host tags, and moderation actions.*
+
+### Host Security Controls
+Hosts can lock the meeting (preventing any new attendees from entering), enable/disable the Waiting Room, allow or restrict screen sharing, and toggle in-meeting chat.
+
+![Host Security](docs/screenshots/meeting-v3/13-host-security.png)
+*Figure 14: Host Security menu with live switches for Room Lock, Waiting Room, and Participant Permissions.*
 
 ---
 
-## 🏗️ Architecture & System Design
+## ⏺️ Recording
+
+Voom provides host-initiated session recording with real-time visual indicators. When recording begins, all room attendees receive a synchronized notification and a glowing red `REC 00:xx` timer banner appears in the header.
+
+![Recording Mode](docs/screenshots/meeting-v3/11-recording.png)
+*Figure 15: Active recording mode with real-time duration counter and glowing REC banner.*
+
+---
+
+## 📝 Transcription
+
+Upon session completion, recorded media is pushed to the BullMQ asynchronous worker pipeline. The speech-to-text worker produces speaker-diarized transcripts tagged with exact millisecond timestamps and full-text search capability.
+
+![Transcript View](docs/screenshots/meeting-v3/12-transcript.png)
+*Figure 16: Interactive transcript modal with searchable speaker dialogue and seekable timestamps.*
+
+---
+
+## 📜 History & Meeting Detail
+
+Completed meetings are permanently archived in the organization's history dashboard.
+
+### Meeting History Dashboard
+Chronological overview of all organization sessions with attendee counts, durations, and recording/transcript badges.
+
+![Meeting History](docs/screenshots/meeting-v3/17-history.png)
+*Figure 17: Historical meeting archive listing past recordings, attendee counts, duration, and status chips.*
+
+### Deep-Dive Meeting Detail
+Comprehensive session breakdown containing tabs for Overview, Participants, Chat Logs, Transcripts, and AI Summaries.
+
+![Meeting Detail](docs/screenshots/meeting-v3/18-meeting-detail.png)
+*Figure 18: Meeting detail view showing full transcripts, agenda items, and action points.*
+
+---
+
+## 🧠 Ask Voom — AI Meeting Memory
+
+Ask Voom is a vector-grounded RAG intelligence assistant allowing organization members to ask natural language questions about past discussions, decisions, and action items.
+
+### Conversational Knowledge Retrieval
+Ask Voom queries the organization's vector database, retrieves matching transcript excerpts, and provides an authoritative response with timestamp citations.
+
+![Ask Voom Q&A](docs/screenshots/meeting-v3/19-ask-voom.png)
+*Figure 19: Ask Voom interface querying meeting transcripts with context retrieval and timestamp citations.*
+
+### Knowledge Readiness State
+Context-aware readiness state displaying indexed meeting metrics and prompt suggestions rather than generic 404 errors.
+
+![Ask Voom Readiness State](docs/screenshots/meeting-v3/20-ask-voom-empty.png)
+*Figure 20: Ready state displaying knowledge base status chips and suggested inquiries without generic 404s.*
+
+---
+
+## 📱 Responsive & Mobile Experience
+
+Voom delivers a fluid experience across desktop, tablet, and mobile displays. On mobile viewports (e.g., iPhone 13 390x844), meeting stages collapse into touch-optimized vertical stacks with swipeable drawers and compact bottom controls.
+
+![Mobile Meeting](docs/screenshots/meeting-v3/21-mobile-meeting.png)
+*Figure 21: Mobile viewport demonstrating responsive stage layout and touch-optimized controls.*
+
+---
+
+## 🏗️ Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ 1. FRONTEND: Render Static Site (React 18 SPA)                             │
-│ - URL: https://voom-frontend.onrender.com                                   │
-│ - Pure client-side WebRTC mesh; short-lived access token stored in memory   │
+│ 1. FRONTEND: React 18 Single Page Application (Port 3000)                   │
+│ - Pure WebRTC P2P Mesh with Socket.IO Client Signaling                      │
+│ - Responsive Material-UI Components & CSS Modules                           │
 └──────────────────────────────────────┬──────────────────────────────────────┘
                                        │ HTTPS / WSS
 ┌──────────────────────────────────────▼──────────────────────────────────────┐
-│ 2. BACKEND API: Render Web Service (Node.js + Express + Socket.IO)         │
-│ - Port: 10000 | JWT Auth (Access Token + HttpOnly Refresh Cookie)           │
-│ - Real-time signaling & Redis Socket.IO adapter for horizontal scale        │
-│ - Health check: GET `/api/v1/health` & Readiness: GET `/api/v1/health/ready`│
+│ 2. BACKEND API: Node.js + Express + Socket.IO Server (Port 8000)            │
+│ - JWT Authentication (Access Tokens + HttpOnly Cookies)                     │
+│ - Realtime Signaling Gateway with Redis Adapter                              │
+│ - Health check: GET `/api/v1/health` & Ready check: GET `/api/v1/health/ready`│
 └──────────────┬──────────────────────────────────────────────┬───────────────┘
                │                                              │ BullMQ Jobs
 ┌──────────────▼──────────────────────────┐   ┌───────────────▼───────────────┐
-│ MANAGED PERSISTENCE & BROKERS           │   │ 3. BACKGROUND WORKER          │
-│ - Database: MongoDB Atlas (Mongoose)    │   │ - Render Background Worker    │
-│ - Cache & PubSub: Redis 7.x (ioredis)   │   │ - BullMQ queue consumer       │
-│ - Transcripts, Recordings, Vector RAG   │   │ - Transcription & AI pipeline │
+│ PERSISTENCE & DATA LAYER                │   │ 3. ASYNC BACKGROUND WORKER    │
+│ - Database: MongoDB (Mongoose Schemas)  │   │ - BullMQ Queue Consumer       │
+│ - Cache & PubSub: Redis 7.x             │   │ - Deepgram / Whisper STT      │
+│ - Models: Meeting, Chat, Recording, etc │   │ - OpenAI Meeting Summarizer   │
 └─────────────────────────────────────────┘   └───────────────────────────────┘
 ```
 
 ---
 
-## 📂 Project Structure
+## 🔒 Security
 
-```text
-ZOOM CLONE/
-├── .github/                   # CI/CD Workflows
-├── docs/                      # Production certification, runbooks, and audits
-│   ├── screenshots/           # UI screenshots and visual assets
-│   │   └── production/        # 17 audited production walkthrough captures
-│   ├── FINAL_RELEASE_REPORT.md
-│   ├── LIVE_PRODUCTION_RELEASE_REPORT.md
-│   ├── PRODUCTION_DEPLOYMENT_READINESS.md
-│   ├── PRODUCTION_RELEASE_RUNBOOK.md
-│   └── PRODUCTION_SMOKE_TEST_REPORT.md
-├── render.yaml                # Render Infrastructure-as-Code Blueprint
-├── docker-compose.yml         # Container orchestration manifest
-├── package.json               # Root scripts and workspace dependencies
-├── tests/                     # Playwright multi-browser test suites
-├── ZBACKEND/                  # Express REST API, Socket.IO Server & BullMQ Worker
-│   ├── src/
-│   │   ├── config/            # Database and broker configuration
-│   │   ├── controllers/       # Auth, Meeting, Organization, Billing controllers
-│   │   ├── middleware/        # JWT auth, rateLimiter, errorHandler, tenantResolver
-│   │   ├── models/            # Mongoose schemas (User, Meeting, Organization, etc.)
-│   │   ├── routes/            # Express route definitions (`/api/v1`)
-│   │   ├── services/          # WebRTC signaling, BullMQ queues, AI & Transcription
-│   │   ├── sockets/           # Socket.IO connection and event manager
-│   │   ├── server.js          # Backend API entry point
-│   │   └── worker.js          # Background BullMQ worker entry point
-│   └── package.json
-└── zfrontend/                 # React 18 Single-Page Application
-    ├── src/
-    │   ├── components/        # Meeting stage, controls, chat drawers, headers
-    │   ├── pages/             # Landing, Auth, Dashboard, History, AskVoom, Org
-    │   ├── services/          # Axios API client, auth interceptors
-    │   ├── styles/            # CSS Modules and dark theme styles
-    │   ├── environment.js     # Dynamic backend URL resolution
-    │   └── App.js             # Client-side routing and providers
-    └── package.json
-```
+- **Server-Authoritative Enforcement:** Role permissions (Host/Co-host/Participant) are verified server-side on every REST request and Socket.IO signal.
+- **Tenant Isolation:** All meetings, chats, recordings, and transcripts are strictly scoped to the user's active organization ID.
+- **Meeting Lock:** Server-enforced lock flag immediately rejects unauthorized connection attempts at the Socket gateway.
+- **Media Safety:** Access tokens are stored strictly in memory; refresh tokens reside in secure, HttpOnly, SameSite cookies.
+- **Sanitization & Protection:** Automated MongoDB query sanitization (`express-mongo-sanitize`), rate limiting, and Helmet headers.
 
 ---
 
-## 💻 Local Setup & Development
+## 🧪 Testing
 
-### 1. Prerequisites
-- **Node.js:** v18.0.0 or higher
-- **MongoDB:** MongoDB Atlas connection string or local MongoDB instance (v6.0+)
-- **Redis:** Redis Server (v6.2+) running on port 6379
-
-### 2. Installation
-Clone the repository and install dependencies:
+The repository includes a comprehensive Playwright multi-user automated suite verifying end-to-end functionality across 4 concurrent browser sessions:
 
 ```bash
-# Install backend dependencies
-cd ZBACKEND
-npm install
-
-# Install frontend dependencies
-cd ../zfrontend
-npm install
+# Run the complete 4-user meeting test suite
+node scratch/test_meeting_v3_suite.js
 ```
 
-### 3. Environment Configuration
-Create `ZBACKEND/.env` (refer to `ZBACKEND/.env.example`):
+### Verified Test Cases:
+- **Two-User Connection:** Verified two-way WebRTC audio/video stream exchange and bidirectional muting.
+- **Four-User Concurrent Mesh:** Verified 4 peers in an adaptive 2x2 grid without ghost tiles or duplicate sockets.
+- **Screen Share Conflict:** Verified presenter stage takeover and remote viewer stream handling.
+- **Realtime Chat & History:** Verified multi-user chat delivery and late-join hydration.
+- **Reactions & Raise Hand:** Verified socket broadcasts and floating emoji animations.
+- **Session Termination:** Verified host-initiated "End Meeting for All" with clean WebRTC teardown.
 
-```ini
-PORT=8000
-MONGODB_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/voom?retryWrites=true&w=majority
-REDIS_URL=redis://localhost:6379
-CORS_ORIGIN=http://localhost:3000
-JWT_ACCESS_SECRET=your_super_secret_access_key_32_chars_long
-JWT_REFRESH_SECRET=your_super_secret_refresh_key_32_chars_long
-ACCESS_TOKEN_EXPIRES_IN=15m
-REFRESH_TOKEN_EXPIRES_IN=7d
-TRANSCRIPTION_PROVIDER=mock-whisper
-```
+---
 
-### 4. Running the Platform
-Start each subsystem in separate terminals:
+## 🚀 Deployment
+
+Voom is fully configured for deployment on Render, Docker, or traditional cloud infrastructure:
 
 ```bash
-# Terminal 1: Backend API Server
+# 1. Start Redis
+./redis-server.exe redis.windows.conf
+
+# 2. Start Backend API
 cd ZBACKEND
 npm run dev
 
-# Terminal 2: BullMQ Background Worker
+# 3. Start BullMQ Background Worker
 cd ZBACKEND
 npm run worker
 
-# Terminal 3: Frontend Web Client
+# 4. Start Frontend
 cd zfrontend
 npm start
 ```
-Access the client at `http://localhost:3000`.
-
----
-
-## 🚀 Production Deployment (Render)
-
-Voom is pre-configured for automated cloud deployment on Render via [`render.yaml`](render.yaml).
-
-### 1. Provisioning Services
-The Blueprint automatically orchestrates three coordinated services:
-- **`voom-frontend` (Static Site):**
-  - Build: `cd zfrontend && npm ci && npm run build`
-  - Publish: `./zfrontend/build`
-- **`voom-api` (Web Service):**
-  - Build: `cd ZBACKEND && npm ci`
-  - Start: `cd ZBACKEND && npm run start`
-- **`voom-worker` (Background Worker):**
-  - Build: `cd ZBACKEND && npm ci`
-  - Start: `cd ZBACKEND && npm run worker`
-
-### 2. Environment Variables Configuration
-In the Render Dashboard, supply the following secrets under Service Settings:
-- `MONGODB_URI`: Production MongoDB Atlas cluster connection string.
-- `REDIS_URL`: Managed Redis connection string (Upstash or Redis Cloud).
-- `JWT_ACCESS_SECRET`: Cryptographically secure random 256-bit string.
-- `JWT_REFRESH_SECRET`: Cryptographically secure random 256-bit string.
-- `STRIPE_SECRET_KEY`: Stripe test key (`sk_test_...`).
-- `STRIPE_WEBHOOK_SECRET`: Stripe webhook verification secret (`whsec_...`).
-
----
-
-## 🧪 Verification & Testing
-
-### Staging / Local Production Simulation
-- **API Health Check:** `GET /api/v1/health` ➔ `HTTP 200 OK` (`status: "ok"`).
-- **Dependency Readiness:** `GET /api/v1/health/ready` ➔ `HTTP 200 OK` (`mongodb: "up"`, `redis: "up"`).
-- **Two-User E2E Smoke Test:** Automated Playwright test verifying concurrent multi-browser meeting entry, two-way WebRTC streaming, microphone/camera toggling, in-meeting chat, and screen share transitions:
-  ```bash
-  node scratch/live_production_smoke_test.js
-  ```
-- **Staging Status:** **PASS (14/14 Verification Gates)**.
-
-### Live Render Cloud Production
-- **Render Status:** **PENDING CLOUD PROVISIONING** (Blueprint declared; awaiting repository connection in Render dashboard).
-- **Live Cloud Health Probe:** Probing `https://voom-api.onrender.com` returns HTTP 404 pending cloud service creation.
-
----
-
-## 📄 Key Documentation
-
-- [Live Production Release Report](docs/LIVE_PRODUCTION_RELEASE_REPORT.md)
-- [Final Release Report](docs/FINAL_RELEASE_REPORT.md)
-- [Production Deployment Readiness](docs/PRODUCTION_DEPLOYMENT_READINESS.md)
-- [Production Release Runbook](docs/PRODUCTION_RELEASE_RUNBOOK.md)
-- [Production Smoke Test Report](docs/PRODUCTION_SMOKE_TEST_REPORT.md)
-
----
-
-## 📜 License
-Licensed under the ISC License. © 2026 Voom Technologies Inc. All rights reserved.

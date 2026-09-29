@@ -118,6 +118,11 @@ export const connectToSocket = (server) => {
                 isHost = await isUserMeetingHostOrAdmin(userId, meeting);
             }
 
+            // Reject join if meeting is locked by host
+            if (meeting?.settings?.isLocked && !isHost) {
+                return socket.emit("meeting:locked", { message: "This meeting is locked by the host." });
+            }
+
             // Waiting Room check: if enabled and user is NOT host and not already approved
             const waitingRoomEnabled = meeting?.settings?.waitingRoomEnabled === true;
             if (waitingRoomEnabled && !isHost && !metadata.isApproved) {
@@ -175,7 +180,8 @@ export const connectToSocket = (server) => {
                 isHost,
                 isMuted: metadata.isMuted || false,
                 isVideoOff: metadata.isVideoOff || false,
-                isScreenSharing: false
+                isScreenSharing: false,
+                isHandRaised: false
             };
 
             // Notify all peers currently in the room about the new participant (PRESERVED CONTRACT)
@@ -778,6 +784,96 @@ export const connectToSocket = (server) => {
                         });
                     }
                 });
+            }
+        });
+
+        /**
+         * EVENT: meeting:reaction
+         * Broadcasts floating reaction emoji to all room participants
+         */
+        socket.on("meeting:reaction", ({ meetingCode, emoji }) => {
+            const p = participants[socket.id];
+            if (!p) return;
+            if (connections[p.path]) {
+                connections[p.path].forEach(id => {
+                    io.to(id).emit("meeting:reaction-received", {
+                        senderSocketId: socket.id,
+                        senderName: p.username,
+                        emoji: emoji || "👍",
+                        timestamp: Date.now()
+                    });
+                });
+            }
+        });
+
+        /**
+         * EVENT: meeting:raise-hand
+         * Sets participant hand raised state and broadcasts to room
+         */
+        socket.on("meeting:raise-hand", ({ meetingCode }) => {
+            const p = participants[socket.id];
+            if (!p) return;
+            p.isHandRaised = true;
+            if (connections[p.path]) {
+                connections[p.path].forEach(id => {
+                    io.to(id).emit("meeting:hand-raised", {
+                        socketId: socket.id,
+                        username: p.username
+                    });
+                });
+                const roomParticipants = connections[p.path].map(id => participants[id] || { socketId: id, username: "Participant" });
+                connections[p.path].forEach(id => io.to(id).emit("meeting:participants-list", roomParticipants));
+            }
+        });
+
+        /**
+         * EVENT: meeting:lower-hand
+         * Lowers self hand or host lowers another participant's hand
+         */
+        socket.on("meeting:lower-hand", ({ meetingCode, targetSocketId }) => {
+            const p = participants[socket.id];
+            if (!p) return;
+            const targetId = targetSocketId || socket.id;
+            if (participants[targetId]) {
+                participants[targetId].isHandRaised = false;
+            }
+            if (connections[p.path]) {
+                connections[p.path].forEach(id => {
+                    io.to(id).emit("meeting:hand-lowered", {
+                        socketId: targetId
+                    });
+                });
+                const roomParticipants = connections[p.path].map(id => participants[id] || { socketId: id, username: "Participant" });
+                connections[p.path].forEach(id => io.to(id).emit("meeting:participants-list", roomParticipants));
+            }
+        });
+
+        /**
+         * EVENT: meeting:toggle-lock
+         * Host locks or unlocks the meeting room
+         */
+        socket.on("meeting:toggle-lock", async ({ meetingCode, isLocked }) => {
+            const p = participants[socket.id];
+            const code = meetingCode || p?.meetingCode;
+            if (!code) return;
+            try {
+                const meeting = await Meeting.findOne({ meetingCode: code });
+                if (!meeting) return;
+                const isHostOrAdmin = await isUserMeetingHostOrAdmin(p?.userId, meeting);
+                if (!isHostOrAdmin && !p?.isHost) {
+                    return socket.emit("meeting:error", { message: "Only the host can lock the meeting." });
+                }
+                if (!meeting.settings) meeting.settings = {};
+                meeting.settings.isLocked = !!isLocked;
+                await meeting.save();
+                if (connections[p?.path]) {
+                    connections[p.path].forEach(id => {
+                        io.to(id).emit("meeting:lock-status", { isLocked: meeting.settings.isLocked });
+                        io.to(id).emit("meeting:settings-updated", meeting.settings);
+                    });
+                }
+            } catch (err) {
+                logger.error("Error toggling meeting lock:", err.message);
             }
         });
 
