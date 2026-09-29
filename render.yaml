@@ -5,9 +5,11 @@ services:
   - type: web
     name: voom-frontend
     env: static
-    buildCommand: "cd zfrontend && npm ci && npm run build"
+    buildCommand: "cd zfrontend && npm ci && CI=false npm run build"
     staticPublishPath: "./zfrontend/build"
     envVars:
+      - key: CI
+        value: "false"
       - key: REACT_APP_SERVER_URL
         value: "https://voom-api.onrender.com"
       - key: REACT_APP_SOCKET_URL
