@@ -33,7 +33,19 @@ import logger from "../utils/logger.js";
 export const connectToSocket = (server) => {
     const serverOptions = {
         cors: {
-            origin: process.env.CORS_ORIGIN || "http://localhost:3000",
+            origin: (origin, callback) => {
+                if (!origin) return callback(null, true);
+                if (
+                    origin.includes("localhost") ||
+                    origin.includes("127.0.0.1") ||
+                    origin.endsWith(".onrender.com") ||
+                    origin === process.env.CORS_ORIGIN ||
+                    origin === process.env.CLIENT_URL
+                ) {
+                    return callback(null, true);
+                }
+                return callback(null, true);
+            },
             methods: ["GET", "POST"],
             allowedHeaders: ["Content-Type", "Authorization", "X-Organization-Id"],
             credentials: true

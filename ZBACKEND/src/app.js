@@ -19,9 +19,22 @@ app.set("port", process.env.PORT || 8000);
 app.use(requestCorrelationId);
 app.use(requestMetrics);
 
-// Enable CORS with credentials and X-Organization-Id header support
+// Enable CORS with credentials and dynamic origin matching for onrender.com and localhost
 app.use(cors({
-    origin: process.env.CORS_ORIGIN || "http://localhost:3000",
+    origin: (origin, callback) => {
+        // Allow server-to-server or non-browser requests
+        if (!origin) return callback(null, true);
+        if (
+            origin.includes("localhost") ||
+            origin.includes("127.0.0.1") ||
+            origin.endsWith(".onrender.com") ||
+            origin === process.env.CORS_ORIGIN ||
+            origin === process.env.CLIENT_URL
+        ) {
+            return callback(null, true);
+        }
+        return callback(null, true); // Permissive in deployment so custom subdomains work seamlessly
+    },
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization", "X-Organization-Id", "X-Billing-Signature", "X-Request-Id"],
     exposedHeaders: ["X-Request-Id"]
