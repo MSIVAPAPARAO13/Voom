@@ -27,7 +27,10 @@ export default function MeetingStage({
     participantsList = [], // Metadata objects from socket: [{ socketId, username, isMuted, isVideoOff, isHost }]
     viewMode = "spotlight", // "spotlight" | "grid"
     spotlightSocketId = null,
-    onSetSpotlightSocketId
+    onSetSpotlightSocketId,
+    presenterSocketId = null,
+    presenterName = "",
+    activeSpeakerSocketId = null
 }) {
     const [copied, setCopied] = useState(false);
 
@@ -48,6 +51,62 @@ export default function MeetingStage({
         .slice(0, 2)
         .join("")
         .toUpperCase() || "Y";
+
+    // 0. Remote Screen Sharing Active State
+    const isRemoteScreenSharing = Boolean(presenterSocketId && presenterSocketId !== "self");
+    const presenterVideo = isRemoteScreenSharing ? videos.find(v => v.socketId === presenterSocketId) : null;
+
+    if (isRemoteScreenSharing && presenterVideo) {
+        return (
+            <div className={styles.stageArea}>
+                {/* Banner: [Presenter Name] is presenting */}
+                <div className={styles.screenShareBanner} style={{ borderColor: 'rgba(16, 185, 129, 0.4)' }}>
+                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#10b981', boxShadow: '0 0 8px #10b981' }} />
+                    <Typography variant="body2" sx={{ color: '#ffffff', fontWeight: 600, fontSize: '0.85rem' }}>
+                        {presenterName || "A participant"} is presenting
+                    </Typography>
+                </div>
+
+                {/* Main Remote Screen Share View */}
+                <div className={styles.stageCanvas}>
+                    <div className={styles.mainVideoWrapper}>
+                        <video
+                            ref={el => {
+                                if (el && presenterVideo.stream && el.srcObject !== presenterVideo.stream) {
+                                    el.srcObject = presenterVideo.stream;
+                                }
+                            }}
+                            autoPlay
+                            playsInline
+                            className={styles.mainVideoElement}
+                        />
+                    </div>
+
+                    {/* Floating Self Preview */}
+                    <FloatingSelfView
+                        localVideoref={localVideoref}
+                        video={video}
+                        audio={audio}
+                        username={username}
+                        isHost={isHost}
+                    />
+                </div>
+
+                {/* Remote Participants Filmstrip at the bottom */}
+                {videos.length > 0 && (
+                    <ParticipantFilmstrip
+                        participants={videos.map(v => ({
+                            socketId: v.socketId,
+                            stream: v.stream,
+                            participantInfo: getParticipantInfo(v.socketId),
+                            isSpotlight: v.socketId === presenterSocketId
+                        }))}
+                        onSelectSpotlight={onSetSpotlightSocketId}
+                    />
+                )}
+            </div>
+        );
+    }
 
     // 1. Screen Sharing Active State
     if (screen) {
@@ -276,12 +335,19 @@ export default function MeetingStage({
                             .slice(0, 2)
                             .join("")
                             .toUpperCase() || "P";
+                        const isSpeaking = activeSpeakerSocketId === item.socketId || (item.isSelf && activeSpeakerSocketId === "self");
 
                         return (
                             <div
                                 key={item.socketId}
                                 className={styles.mainVideoWrapper}
-                                style={{ height: '100%' }}
+                                style={{
+                                    height: '100%',
+                                    borderRadius: '12px',
+                                    border: isSpeaking ? '2px solid #ff9839' : '1px solid rgba(255, 255, 255, 0.1)',
+                                    boxShadow: isSpeaking ? '0 0 16px rgba(255, 152, 57, 0.6)' : 'none',
+                                    transition: 'border 0.2s ease, box-shadow 0.2s ease'
+                                }}
                             >
                                 {item.isSelf ? (
                                     <video
@@ -366,6 +432,7 @@ export default function MeetingStage({
         .toUpperCase() || "P";
     const remoteVideoOff = remoteInfo?.isVideoOff ?? false;
     const remoteMuted = remoteInfo?.isMuted ?? false;
+    const isRemoteSpeaking = activeSpeakerSocketId === activeRemoteVideo?.socketId;
 
     // Remaining participants for the filmstrip (if more than 1 remote)
     const filmstripParticipants = videos.map(v => ({
@@ -379,7 +446,15 @@ export default function MeetingStage({
         <div className={styles.stageArea}>
             <div className={styles.stageCanvas}>
                 {/* Active Main Video */}
-                <div className={styles.mainVideoWrapper}>
+                <div
+                    className={styles.mainVideoWrapper}
+                    style={{
+                        borderRadius: '16px',
+                        border: isRemoteSpeaking ? '2px solid #ff9839' : '1px solid rgba(255, 255, 255, 0.1)',
+                        boxShadow: isRemoteSpeaking ? '0 0 20px rgba(255, 152, 57, 0.6)' : 'none',
+                        transition: 'border 0.2s ease, box-shadow 0.2s ease'
+                    }}
+                >
                     {activeRemoteVideo && (
                         <video
                             data-socket={activeRemoteVideo.socketId}

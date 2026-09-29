@@ -32,7 +32,8 @@ export default function ParticipantsPanel({
     onApproveWaiting,
     onRejectWaiting,
     onMuteParticipant,
-    onRemoveParticipant
+    onRemoveParticipant,
+    onDisableVideo
 }) {
     if (!open) return null;
 
@@ -244,6 +245,16 @@ export default function ParticipantsPanel({
                                                     aria-label={`Mute ${pName}`}
                                                 >
                                                     <MicOffIcon sx={{ fontSize: 16 }} />
+                                                </IconButton>
+                                            </Tooltip>
+                                            <Tooltip title="Turn Off Camera">
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={() => onDisableVideo && onDisableVideo(p.socketId)}
+                                                    sx={{ color: '#94a3b8', '&:hover': { color: '#f87171' } }}
+                                                    aria-label={`Disable video for ${pName}`}
+                                                >
+                                                    <VideocamOffIcon sx={{ fontSize: 16 }} />
                                                 </IconButton>
                                             </Tooltip>
                                             <Tooltip title="Remove Participant">

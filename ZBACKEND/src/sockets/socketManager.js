@@ -23,6 +23,7 @@ let participants = {};
 let waitingRoom = {};
 let hostSockets = {};
 let typingUsers = {};
+let activePresenters = {}; // { [meetingCode]: { socketId, username } }
 let ioInstance = null;
 
 export const getIO = () => ioInstance;
@@ -223,6 +224,14 @@ export const connectToSocket = (server) => {
             } else {
                 socket.emit("meeting:recording-state", {
                     isRecording: false
+                });
+            }
+
+            // Deliver active screen share state if a participant is presenting
+            if (activePresenters[meetingCode]) {
+                socket.emit("meeting:screen-share-started", {
+                    presenterSocketId: activePresenters[meetingCode].socketId,
+                    presenterName: activePresenters[meetingCode].username
                 });
             }
         });
@@ -655,6 +664,123 @@ export const connectToSocket = (server) => {
             });
         });
 
+        /**
+         * EVENT: meeting:start-screen-share
+         * Validates presenter uniqueness and meeting settings
+         */
+        socket.on("meeting:start-screen-share", async ({ meetingCode }) => {
+            const p = participants[socket.id];
+            const code = meetingCode || p?.meetingCode;
+            if (!code) return;
+
+            let meeting = null;
+            try {
+                meeting = await Meeting.findOne({ meetingCode: code });
+            } catch (e) {}
+
+            if (meeting?.settings?.allowScreenShare === false && !p?.isHost) {
+                return socket.emit("meeting:screen-share-conflict", {
+                    message: "Screen sharing has been disabled by the meeting host."
+                });
+            }
+
+            // Conflict detection: prevent multiple simultaneous shares
+            if (activePresenters[code] && activePresenters[code].socketId !== socket.id) {
+                return socket.emit("meeting:screen-share-conflict", {
+                    message: `${activePresenters[code].username || "Another participant"} is currently sharing their screen.`
+                });
+            }
+
+            activePresenters[code] = {
+                socketId: socket.id,
+                username: p?.username || "Presenter"
+            };
+
+            if (p) {
+                p.isScreenSharing = true;
+            }
+
+            if (connections[p?.path]) {
+                connections[p.path].forEach(id => {
+                    io.to(id).emit("meeting:screen-share-started", {
+                        presenterSocketId: socket.id,
+                        presenterName: p?.username || "Presenter"
+                    });
+                });
+                const roomParticipants = connections[p.path].map(id => participants[id] || { socketId: id, username: "Participant" });
+                connections[p.path].forEach(id => io.to(id).emit("meeting:participants-list", roomParticipants));
+            }
+        });
+
+        /**
+         * EVENT: meeting:stop-screen-share
+         * Clears presenter lock and notifies all participants
+         */
+        socket.on("meeting:stop-screen-share", ({ meetingCode }) => {
+            const p = participants[socket.id];
+            const code = meetingCode || p?.meetingCode;
+            if (!code) return;
+
+            if (activePresenters[code]?.socketId === socket.id || p?.isHost) {
+                const presenterSocketId = activePresenters[code]?.socketId || socket.id;
+                delete activePresenters[code];
+
+                if (participants[presenterSocketId]) {
+                    participants[presenterSocketId].isScreenSharing = false;
+                }
+
+                if (connections[p?.path]) {
+                    connections[p.path].forEach(id => {
+                        io.to(id).emit("meeting:screen-share-stopped", {
+                            presenterSocketId
+                        });
+                    });
+                    const roomParticipants = connections[p.path].map(id => participants[id] || { socketId: id, username: "Participant" });
+                    connections[p.path].forEach(id => io.to(id).emit("meeting:participants-list", roomParticipants));
+                }
+            }
+        });
+
+        /**
+         * EVENT: meeting:disable-participant-video
+         * Host disables participant camera
+         */
+        socket.on("meeting:disable-participant-video", ({ targetSocketId, meetingCode }) => {
+            if (!hostSockets[meetingCode]?.has(socket.id)) {
+                return socket.emit("meeting:error", { message: "Only the meeting host can disable participant video." });
+            }
+
+            if (participants[targetSocketId]) {
+                participants[targetSocketId].isVideoOff = true;
+            }
+            io.to(targetSocketId).emit("meeting:host-disabled-video");
+
+            const p = participants[targetSocketId];
+            if (p && connections[p.path]) {
+                const roomParticipants = connections[p.path].map(id => participants[id] || { socketId: id, username: "Participant" });
+                connections[p.path].forEach(id => io.to(id).emit("meeting:participants-list", roomParticipants));
+            }
+        });
+
+        /**
+         * EVENT: meeting:active-speaker
+         * Relays active speaker state to peers
+         */
+        socket.on("meeting:active-speaker", ({ meetingCode, isSpeaking }) => {
+            const p = participants[socket.id];
+            if (p && connections[p.path]) {
+                connections[p.path].forEach(id => {
+                    if (id !== socket.id) {
+                        io.to(id).emit("meeting:active-speaker-changed", {
+                            socketId: socket.id,
+                            username: p.username,
+                            isSpeaking
+                        });
+                    }
+                });
+            }
+        });
+
         // ==========================================
         // PHASE 5: WORKSPACE REAL-TIME COLLABORATION
         // ==========================================
@@ -942,6 +1068,15 @@ export const connectToSocket = (server) => {
                 }
                 if (typingUsers[p.meetingCode]) {
                     delete typingUsers[p.meetingCode][socket.id];
+                }
+                // Release screen-sharing presenter lock if this user was presenting
+                if (activePresenters[p.meetingCode]?.socketId === socket.id) {
+                    delete activePresenters[p.meetingCode];
+                    if (connections[p.path]) {
+                        connections[p.path].forEach(id => {
+                            io.to(id).emit("meeting:screen-share-stopped", { presenterSocketId: socket.id });
+                        });
+                    }
                 }
                 delete participants[socket.id];
             }

@@ -20,136 +20,133 @@ Voom is an enterprise video collaboration platform engineered to bridge real-tim
 
 ---
 
-## 📸 Product Walkthrough & Visual Tour
+## 📸 Meeting Experience & Visual Walkthrough
 
-### 1. Landing Experience
-The landing page introduces the Voom platform with a modern dark aesthetic, featuring obsidian backdrops (`#0B1020`), vibrant orange accents (`#FF9839`), ambient glows, and dynamic feature highlights.
+### 1. Pre-Call Device Lobby
+Before joining a meeting room, attendees test camera, microphone, and audio devices with real-time feedback and device status badges.
 
-![Voom Landing Page](docs/screenshots/production/01-production-landing.png)
-*Figure 1: Voom Landing Page showcasing the core proposition: "Meet. Collaborate. Remember."*
-
----
-
-### 2. Authentication & Access Management
-Secure JWT session architecture utilizing memory-isolated access tokens and HttpOnly, Secure, SameSite refresh cookies for zero-friction session rotation.
-
-![Voom Authentication](docs/screenshots/production/02-production-login.png)
-*Figure 2: Authentication portal supporting account registration, login, and workspace isolation.*
+![Voom Lobby](docs/screenshots/meeting/01-lobby.png)
+*Figure 1: Device test lobby with live video preview, mute controls, and device readiness selectors.*
 
 ---
 
-### 3. User Dashboard
-The central command hub allows users to launch instant meetings, schedule upcoming collaborative discussions, join via meeting codes, and review historical activity logs.
+### 2. Active Meeting Experience
+Full-stage canvas with glassmorphic bottom controls dock, status indicators, and floating self-view PIP.
 
-![Voom Dashboard](docs/screenshots/production/03-production-dashboard.png)
-*Figure 3: Voom User Dashboard with quick actions, meeting code entry, and past session summaries.*
-
----
-
-### 4. Meeting Initiation & Pre-Call Lobby
-Users configure room titles and verify their camera and microphone devices before entering, ensuring full device readiness.
-
-![New Meeting Creation](docs/screenshots/production/04-production-new-meeting.png)
-*Figure 4: Modal dialog for naming meetings and initiating instant collaborative rooms.*
-
-![Meeting Lobby](docs/screenshots/production/05-production-lobby.png)
-*Figure 5: Device test lobby with live video preview, mute controls, and device selectors.*
+![Voom Meeting](docs/screenshots/meeting/02-active-meeting.png)
+*Figure 2: Active meeting interface with bottom control dock, dynamic stages, and self-preview.*
 
 ---
 
-### 5. Active Meeting Interface
-A redesigned full-stage canvas replaces claustrophobic video windows with dynamic stage spotlighting, a floating glassmorphic control dock (`backdrop-filter: blur(16px)`), and a Picture-in-Picture (PiP) self-view.
+### 3. Multi-User Two-Way Stage
+Synchronized two-way WebRTC video streams with active speaker highlighting, audio level detection, and grid balancing.
 
-![Voom Active Meeting](docs/screenshots/production/06-production-active-meeting.png)
-*Figure 6: Redesigned active meeting interface with glassmorphic bottom controls dock, status indicators, and floating PiP self-view.*
-
----
-
-### 6. Multi-User Two-Way WebRTC Streaming
-True peer-to-peer real-time communication delivering synchronized video and audio streams between concurrent attendees with zero renegotiation lag.
-
-![Two-User WebRTC Stage](docs/screenshots/production/07-production-two-user-webrtc.png)
-*Figure 7: Two attendees (Siva and Sarah Connor) connected concurrently with live two-way WebRTC video feeds, active audio badges, and participant counter.*
+![Two-User Meeting](docs/screenshots/meeting/03-two-user-meeting.png)
+*Figure 3: Two attendees in high-definition peer-to-peer WebRTC video with active speaker glow and mute badges.*
 
 ---
 
-### 7. Crisp High-Resolution Screen Sharing
-Attendees can share presentations or applications. Screen share feeds commandeer the main stage with high-fidelity `object-fit: contain` rendering while preserving speaker visibility.
+### 4. In-Meeting Persistent Chat
+Integrated real-time chat with speech bubbles, sender identifiers, and relative timestamps, accessible via a slide-out drawer.
 
-![Screen Sharing](docs/screenshots/production/09-production-screen-share.png)
-*Figure 8: High-definition product and architecture presentation slide deck dominating the main meeting canvas with dedicated stop controls.*
-
----
-
-### 8. In-Meeting Persistent Chat
-Integrated real-time chat with speech bubbles, sender identifiers, and relative timestamps, accessible via a slide-out drawer that never obscures active participant video.
-
-![In-Meeting Chat](docs/screenshots/production/08-production-chat.png)
-*Figure 9: Slide-out chat drawer with real-time bi-directional conversation between attendees, relative timestamps, and active message composer.*
+![Voom Chat](docs/screenshots/meeting/04-chat-open.png)
+*Figure 4: In-meeting chat drawer supporting persistent conversation, message reactions, and real-time delivery.*
 
 ---
 
-### 9. Participants & Room Management
-Hosts and members can view all active room participants, monitor audio/video mute states, and manage attendee permissions.
+### 5. Participants & Host Moderation Controls
+Dedicated participant list displaying media states, host badges, and host controls (mute participant, turn off camera, remove attendee).
 
-![Participants Panel](docs/screenshots/production/10-production-participants.png)
-*Figure 10: Attendee list drawer detailing current participants, host tags, and real-time media states.*
-
----
-
-### 10. Meeting Recording Lifecycle
-Client-side MediaRecorder capture with an active glowing red REC indicator, live timer, and automated post-meeting upload pipeline to cloud persistence.
-
-![Meeting Recording](docs/screenshots/production/11-production-recording.png)
-*Figure 11: Active recording mode with real-time duration counter, glowing REC banner, and live stage capture.*
+![Participants Panel](docs/screenshots/meeting/05-participants-open.png)
+*Figure 5: Attendee list drawer detailing current participants, host tags, and moderation actions.*
 
 ---
 
-### 11. Meeting History & Knowledge Archives
+### 6. Screen Sharing & Presenter Stage
+Server-authoritative screen sharing with conflict detection ("User X is presenting") and track replacement that preserves camera state.
+
+![Voom Screen Sharing](docs/screenshots/meeting/06-screen-share.png)
+*Figure 6: High-definition presentation dominating the stage with presenter notification and stop controls.*
+
+---
+
+### 7. Remote Presentation View with Floating PIP
+When a remote participant shares content, remote attendees receive the presentation full-stage while retaining their own camera in a floating PIP.
+
+![Screen Sharing with PIP](docs/screenshots/meeting/07-screen-share-with-pip.png)
+*Figure 7: Remote attendee view showing shared screen with high-fidelity scaling and floating self PIP.*
+
+---
+
+### 8. Meeting Recording Lifecycle
+Client-side MediaRecorder capture with a glowing red REC indicator, live timer, and automated post-meeting upload pipeline.
+
+![Meeting Recording](docs/screenshots/meeting/08-recording.png)
+*Figure 8: Active recording mode with real-time duration counter, glowing REC banner, and live stage capture.*
+
+---
+
+### 9. Meeting Ended for Everyone
+Clean meeting termination lifecycle: host ends for all, peer connections gracefully close, recordings finalize, and participants are routed to summary.
+
+![Meeting Ended](docs/screenshots/meeting/09-meeting-ended.png)
+*Figure 9: Meeting termination screen showing completion notice and return options.*
+
+---
+
+### 10. Meeting History & Knowledge Archives
 Completed sessions automatically produce persistent history cards, searchable metadata, and direct access to notes, chat logs, and transcripts.
 
-![Meeting History](docs/screenshots/production/12-production-history.png)
-*Figure 12: Historical meeting archive listing past recordings, attendee counts, duration, and status chips.*
+![Voom History](docs/screenshots/meeting/10-history.png)
+*Figure 10: Historical meeting archive listing past recordings, attendee counts, duration, and status chips.*
+
+---
+
+### 11. Meeting Detail & Collaboration Workspace
+In-depth historical review showing persistent meeting workspace, agenda items, action items, and notes.
+
+![Meeting Detail](docs/screenshots/meeting/11-history-detail.png)
+*Figure 11: Historical workspace modal showing agenda, tasks, and meeting notes.*
 
 ---
 
 ### 12. Interactive Transcripts & Meeting Dialogue
 Historical transcripts display searchable timestamped speaker dialogue (`00:05 Siva`, `00:22 Sarah`) and AI-powered intelligence summaries.
 
-![Meeting Transcripts](docs/screenshots/production/13-production-transcript.png)
-*Figure 13: Interactive dialogue breakdown modal with click-to-seek playback timestamps and full meeting chat logs.*
+![Meeting Transcripts](docs/screenshots/meeting/12-transcript.png)
+*Figure 12: Interactive dialogue breakdown modal with click-to-seek playback timestamps and full meeting chat logs.*
 
 ---
 
 ### 13. Ask Voom — AI Vector Memory (RAG)
 Users query organization meetings in natural language. The RAG pipeline matches queries across vector embeddings and returns synthesized answers with clickable timestamp citations (`/:meetingId?t=MM:SS`).
 
-![Ask Voom AI](docs/screenshots/production/14-production-ask-voom.png)
-*Figure 14: Ask Voom interface querying meeting transcripts with context retrieval and timestamp citations.*
+![Ask Voom](docs/screenshots/meeting/13-ask-voom.png)
+*Figure 13: Ask Voom interface querying meeting transcripts with context retrieval and timestamp citations.*
 
 ---
 
-### 14. Organization & Multi-Tenant Management
+### 14. Ask Voom Knowledge Readiness State
+Context-aware readiness state displaying indexed meeting metrics, vector RAG capabilities, and instant query prompt chips.
+
+![Ask Voom Readiness State](docs/screenshots/meeting/14-ask-voom-empty-state.png)
+*Figure 14: Ready state displaying knowledge base status chips and suggested inquiries without generic 404s.*
+
+---
+
+### 15. Organization & Multi-Tenant Management
 Strict organization-scoped workspaces allowing administrators to manage team members, roles (Owner, Admin, Member), and tenant isolation.
 
-![Organization Management](docs/screenshots/production/15-production-organization.png)
+![Organization Management](docs/screenshots/meeting/15-organization.png)
 *Figure 15: Organization settings dashboard with member lists and RBAC permission controls.*
-
----
-
-### 15. Billing & Subscription Tiers
-Stripe test-mode integration featuring Developer Free and Pro Monthly tiers, quota tracking, and subscription lifecycle handling.
-
-![Billing & Plans](docs/screenshots/production/16-production-billing.png)
-*Figure 16: Billing management screen displaying active plan, usage quotas, and Stripe checkout options.*
 
 ---
 
 ### 16. Mobile & Responsive Layout
 Complete responsiveness across mobile (390px), tablet (768px), and desktop (1440px) viewports with stacked video tiles and collapsible drawer overlays.
 
-![Mobile Responsive View](docs/screenshots/production/17-production-mobile.png)
-*Figure 17: Mobile viewport (390px) demonstrating flexible single-column layout and mobile-optimized touch controls.*
+![Mobile Meeting](docs/screenshots/meeting/16-mobile-meeting.png)
+*Figure 16: Mobile viewport (iPhone 13) demonstrating flexible layout and mobile-optimized touch controls.*
 
 ---
 

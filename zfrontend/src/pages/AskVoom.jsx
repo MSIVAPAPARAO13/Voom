@@ -42,6 +42,19 @@ function AskVoom() {
     const [answer, setAnswer] = useState("");
     const [sources, setSources] = useState([]);
     const [searched, setSearched] = useState(false);
+    const [meetingCount, setMeetingCount] = useState(null);
+
+    useEffect(() => {
+        let isMounted = true;
+        apiClient.get('/users/history')
+            .then(res => {
+                if (isMounted && res.data) {
+                    setMeetingCount(Array.isArray(res.data) ? res.data.length : 0);
+                }
+            })
+            .catch(() => {});
+        return () => { isMounted = false; };
+    }, []);
 
     useEffect(() => {
         setAnswer("");
@@ -143,6 +156,24 @@ function AskVoom() {
                             <Alert severity="warning" sx={{ mt: 3, borderRadius: "10px" }}>Please select an organization on the Dashboard to use Ask Voom.</Alert>
                         ) : (
                             <Box component="form" onSubmit={handleAsk} sx={{ mt: 4, mb: 4 }}>
+                                <Box sx={{ display: 'flex', gap: 1.5, mb: 3, flexWrap: 'wrap', alignItems: 'center' }}>
+                                    <Chip 
+                                        label={meetingCount !== null ? `${meetingCount} meetings in history` : "Knowledge Engine Active"} 
+                                        size="small" 
+                                        sx={{ bgcolor: "rgba(255, 152, 57, 0.15)", color: "#FF9839", fontWeight: 700 }}
+                                    />
+                                    <Chip 
+                                        label="Vector RAG Enabled" 
+                                        size="small" 
+                                        sx={{ bgcolor: "rgba(16, 185, 129, 0.15)", color: "#10B981", fontWeight: 700 }}
+                                    />
+                                    <Chip 
+                                        label="Direct Timestamp Navigation" 
+                                        size="small" 
+                                        sx={{ bgcolor: "rgba(99, 102, 241, 0.15)", color: "#818cf8", fontWeight: 700 }}
+                                    />
+                                </Box>
+
                                 <Box sx={{ display: 'flex', gap: 1.5, mb: 3 }}>
                                     <TextField
                                         fullWidth

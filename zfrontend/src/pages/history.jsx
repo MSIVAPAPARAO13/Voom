@@ -442,10 +442,13 @@ function History() {
                         ))}
                     </Box>
                 ) : (
-                    <Box sx={{ textAlign: "center", py: 10, bgcolor: "#111827", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.08)" }}>
-                        <Typography variant="h6" sx={{ color: "#94a3b8", mb: 2 }}>No past meetings found.</Typography>
-                        <Button variant="contained" onClick={() => routeTo("/home")} sx={{ bgcolor: "#FF9839", fontWeight: 700, borderRadius: "10px", "&:hover": { bgcolor: "#e68933" } }}>
-                            Start your first meeting
+                    <Box sx={{ textAlign: "center", py: 10, px: 3, bgcolor: "#111827", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.08)" }}>
+                        <Typography variant="h5" sx={{ color: "#ffffff", fontWeight: 700, mb: 1 }}>No past meetings yet</Typography>
+                        <Typography variant="body1" sx={{ color: "#94a3b8", mb: 3, maxWidth: 500, mx: "auto" }}>
+                            Your meetings, chat history, live transcriptions, and AI intelligence will automatically be archived here once a meeting concludes.
+                        </Typography>
+                        <Button variant="contained" onClick={() => routeTo("/home")} sx={{ bgcolor: "#FF9839", color: "#0B1020", fontWeight: 700, borderRadius: "10px", "&:hover": { bgcolor: "#e68933" }, px: 3, py: 1.2 }}>
+                            Start or Schedule a Meeting
                         </Button>
                     </Box>
                 )}

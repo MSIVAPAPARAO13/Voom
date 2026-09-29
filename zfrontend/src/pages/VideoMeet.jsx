@@ -62,6 +62,11 @@ export default function VideoMeetComponent() {
     let localVideoref = useRef();
     const videoRef = useRef([]);
     const realtimeProviderRef = useRef(null);
+    const cameraStreamRef = useRef(null);
+    const screenStreamRef = useRef(null);
+    const audioContextRef = useRef(null);
+    const analyserRef = useRef(null);
+    const speakingIntervalRef = useRef(null);
 
     // Media & UI States
     const [videoAvailable, setVideoAvailable] = useState(true);
@@ -72,8 +77,12 @@ export default function VideoMeetComponent() {
     const [screenAvailable, setScreenAvailable] = useState(false);
     const [videos, setVideos] = useState([]);
     const [isConnected, setIsConnected] = useState(false);
+    const [connectionState, setConnectionState] = useState("disconnected"); // "connecting" | "connected" | "reconnecting"
     const [viewMode, setViewMode] = useState("spotlight"); // "spotlight" | "grid"
     const [spotlightSocketId, setSpotlightSocketId] = useState(null);
+    const [presenterSocketId, setPresenterSocketId] = useState(null);
+    const [presenterName, setPresenterName] = useState("");
+    const [activeSpeakerSocketId, setActiveSpeakerSocketId] = useState(null);
 
     // Lobby & Meeting Info States
     const [askForUsername, setAskForUsername] = useState(true);
@@ -276,66 +285,130 @@ export default function VideoMeetComponent() {
         }
     };
 
-    const getDislayMedia = () => {
+    const setupAudioAnalyser = (stream) => {
+        try {
+            const tracks = stream.getAudioTracks();
+            if (tracks.length === 0) return;
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContextClass) return;
+
+            if (audioContextRef.current) {
+                audioContextRef.current.close().catch(() => {});
+            }
+
+            const ctx = new AudioContextClass();
+            audioContextRef.current = ctx;
+            const source = ctx.createMediaStreamSource(stream);
+            const analyser = ctx.createAnalyser();
+            analyser.fftSize = 256;
+            source.connect(analyser);
+            analyserRef.current = analyser;
+
+            const buffer = new Uint8Array(analyser.frequencyBinCount);
+            let wasSpeaking = false;
+
+            if (speakingIntervalRef.current) clearInterval(speakingIntervalRef.current);
+            speakingIntervalRef.current = setInterval(() => {
+                if (!audio || !socketRef.current) return;
+                analyser.getByteFrequencyData(buffer);
+                let sum = 0;
+                for (let i = 0; i < buffer.length; i++) sum += buffer[i];
+                const avg = sum / buffer.length;
+                const isSpeakingNow = avg > 25;
+
+                if (isSpeakingNow !== wasSpeaking) {
+                    wasSpeaking = isSpeakingNow;
+                    socketRef.current.emit("meeting:active-speaker", { meetingCode, isSpeaking: isSpeakingNow });
+                    setActiveSpeakerSocketId(isSpeakingNow ? (socketIdRef.current || "self") : null);
+                }
+            }, 300);
+        } catch (e) {
+            console.log("Audio analyzer init skipped:", e.message);
+        }
+    };
+
+    const getDislayMedia = async () => {
         if (screen) {
             if (navigator.mediaDevices.getDisplayMedia) {
-                navigator.mediaDevices.getDisplayMedia({ video: true, audio: true })
-                    .then(getDislayMediaSuccess)
-                    .catch((e) => console.log(e));
+                try {
+                    const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+                    getDislayMediaSuccess(stream);
+                } catch (e) {
+                    console.log("getDisplayMedia cancelled or failed:", e);
+                    setScreen(false);
+                }
             }
         }
     };
 
     const getDislayMediaSuccess = (stream) => {
-        try {
-            window.localStream.getTracks().forEach(track => track.stop());
-        } catch (e) { }
-
+        screenStreamRef.current = stream;
         window.localStream = stream;
-        localVideoref.current.srcObject = stream;
-
-        if (realtimeProviderRef.current) {
-            realtimeProviderRef.current.replaceLocalStream(window.localStream);
+        if (localVideoref.current) {
+            localVideoref.current.srcObject = stream;
         }
 
-        stream.getTracks().forEach(track => track.onended = () => {
-            setScreen(false);
-            try {
-                let tracks = localVideoref.current.srcObject.getTracks();
-                tracks.forEach(track => track.stop());
-            } catch (e) { }
+        if (realtimeProviderRef.current) {
+            realtimeProviderRef.current.replaceLocalStream(stream);
+        }
 
-            let blackStream = black();
-            window.localStream = new MediaStream([blackStream]);
-            localVideoref.current.srcObject = window.localStream;
+        if (socketRef.current) {
+            socketRef.current.emit("meeting:start-screen-share", { meetingCode });
+        }
+
+        // Native browser stop sharing button
+        stream.getVideoTracks()[0].onended = () => {
+            stopScreenSharing();
+        };
+    };
+
+    const stopScreenSharing = () => {
+        setScreen(false);
+        if (screenStreamRef.current) {
+            screenStreamRef.current.getTracks().forEach(track => track.stop());
+            screenStreamRef.current = null;
+        }
+
+        if (cameraStreamRef.current && localVideoref.current) {
+            window.localStream = cameraStreamRef.current;
+            localVideoref.current.srcObject = cameraStreamRef.current;
+            if (realtimeProviderRef.current) {
+                realtimeProviderRef.current.replaceLocalStream(cameraStreamRef.current);
+            }
+        } else {
             getUserMedia();
-        });
+        }
+
+        if (socketRef.current) {
+            socketRef.current.emit("meeting:stop-screen-share", { meetingCode });
+        }
     };
 
     const getUserMediaSuccess = (stream) => {
-        try {
-            window.localStream.getTracks().forEach(track => track.stop());
-        } catch (e) { }
-
+        cameraStreamRef.current = stream;
         window.localStream = stream;
-        localVideoref.current.srcObject = stream;
+        if (localVideoref.current) {
+            localVideoref.current.srcObject = stream;
+        }
 
         if (realtimeProviderRef.current) {
-            realtimeProviderRef.current.replaceLocalStream(window.localStream);
+            realtimeProviderRef.current.replaceLocalStream(stream);
         }
+
+        setupAudioAnalyser(stream);
 
         stream.getTracks().forEach(track => track.onended = () => {
             setVideo(false);
             setAudio(false);
 
             try {
-                let tracks = localVideoref.current.srcObject.getTracks();
-                tracks.forEach(track => track.stop());
+                let tracks = localVideoref.current?.srcObject?.getTracks();
+                if (tracks) tracks.forEach(track => track.stop());
             } catch (e) { }
 
             let blackStream = black();
             window.localStream = new MediaStream([blackStream]);
-            localVideoref.current.srcObject = window.localStream;
+            if (localVideoref.current) localVideoref.current.srcObject = window.localStream;
 
             if (realtimeProviderRef.current) {
                 realtimeProviderRef.current.replaceLocalStream(window.localStream);
@@ -350,8 +423,8 @@ export default function VideoMeetComponent() {
                 .catch((e) => console.log(e));
         } else {
             try {
-                let tracks = localVideoref.current.srcObject.getTracks();
-                tracks.forEach(track => track.stop());
+                let tracks = localVideoref.current?.srcObject?.getTracks();
+                if (tracks) tracks.forEach(track => track.stop());
             } catch (e) { }
         }
     };
@@ -394,11 +467,15 @@ export default function VideoMeetComponent() {
     };
 
     const handleScreen = () => {
-        if (!screen && !isHost && meetingSettings.allowScreenShare === false) {
-            alert("Screen sharing has been disabled by the host.");
-            return;
+        if (!screen) {
+            if (!isHost && meetingSettings.allowScreenShare === false) {
+                alert("Screen sharing has been disabled by the host.");
+                return;
+            }
+            setScreen(true);
+        } else {
+            stopScreenSharing();
         }
-        setScreen(!screen);
     };
 
     const handleEndCall = () => {
@@ -650,8 +727,21 @@ export default function VideoMeetComponent() {
 
         socketRef.current.on('connect_error', () => {
             setIsConnected(false);
+        });
 
-            // Phase 7: Realtime Recording State Listeners
+        socketRef.current.on('reconnect', () => {
+            setIsConnected(true);
+            socketIdRef.current = socketRef.current.id;
+            socketRef.current.emit('join-call', window.location.href, {
+                username: username || "Guest",
+                userId: userData?.id || null,
+                isHost: isHost,
+                isMuted: !audio,
+                isVideoOff: !video
+            });
+        });
+
+        // Phase 7: Realtime Recording State Listeners
             socketRef.current.on('meeting:recording-state', (state) => {
                 setIsRecording(state.isRecording);
                 setRecordingId(state.recordingId || null);
@@ -847,7 +937,34 @@ export default function VideoMeetComponent() {
                 // are never included in socket payloads (see socketManager.js)
                 setTranscriptionStatus({ status: 'failed', ...data });
             });
-        });
+
+            // Screen share listeners
+            socketRef.current.on('meeting:screen-share-started', (data) => {
+                setPresenterSocketId(data.presenterSocketId);
+                setPresenterName(data.presenterName || "Participant");
+            });
+
+            socketRef.current.on('meeting:screen-share-stopped', () => {
+                setPresenterSocketId(null);
+                setPresenterName("");
+            });
+
+            socketRef.current.on('meeting:screen-share-conflict', (data) => {
+                alert(data.message || "Someone is already sharing their screen.");
+            });
+
+            // Active speaker listener
+            socketRef.current.on('meeting:active-speaker-changed', (data) => {
+                setActiveSpeakerSocketId(data.socketId);
+            });
+
+            // Host moderation: disable video
+            socketRef.current.on('meeting:host-disabled-video', () => {
+                setVideo(false);
+                if (localVideoref.current && localVideoref.current.srcObject) {
+                    localVideoref.current.srcObject.getVideoTracks().forEach(t => t.enabled = false);
+                }
+            });
     };
 
     const connect = () => {
@@ -870,6 +987,15 @@ export default function VideoMeetComponent() {
     const handleRemoveParticipant = (targetSocketId) => {
         if (socketRef.current) {
             socketRef.current.emit('meeting:remove-participant', {
+                targetSocketId,
+                meetingCode
+            });
+        }
+    };
+
+    const handleDisableParticipantVideo = (targetSocketId) => {
+        if (socketRef.current) {
+            socketRef.current.emit('meeting:disable-participant-video', {
                 targetSocketId,
                 meetingCode
             });
@@ -1335,6 +1461,9 @@ export default function VideoMeetComponent() {
                             viewMode={viewMode}
                             spotlightSocketId={spotlightSocketId}
                             onSetSpotlightSocketId={setSpotlightSocketId}
+                            presenterSocketId={presenterSocketId}
+                            presenterName={presenterName}
+                            activeSpeakerSocketId={activeSpeakerSocketId}
                         />
 
                         {/* In-Meeting Chat Drawer (Slide-out) */}
@@ -1372,6 +1501,7 @@ export default function VideoMeetComponent() {
                             onRejectWaiting={handleRejectWaiting}
                             onMuteParticipant={handleMuteParticipant}
                             onRemoveParticipant={handleRemoveParticipant}
+                            onDisableVideo={handleDisableParticipantVideo}
                         />
 
                     {/* Phase 5: Collaboration Workspace Drawer */}
