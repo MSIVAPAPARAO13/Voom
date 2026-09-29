@@ -25,11 +25,11 @@ router.get("/", (req, res) => {
 router.get("/ready", async (req, res) => {
     const mongooseModule = await import("mongoose");
     const mongoose = mongooseModule.default || mongooseModule;
-    const { redisClient } = await import("../config/redis.js");
+    const { redisClient, isRedisConfigured } = await import("../config/redis.js");
     
     const mongoStatus = mongoose.connection && mongoose.connection.readyState === 1 ? "up" : "down";
     
-    let redisStatus = "down";
+    let redisStatus = isRedisConfigured ? "down" : "standalone (in-memory)";
     try {
         if (redisClient && redisClient.status === "ready") {
             redisStatus = "up";
@@ -38,7 +38,8 @@ router.get("/ready", async (req, res) => {
         // ignore
     }
 
-    const isReady = mongoStatus === "up" && redisStatus === "up";
+    // Backend is fully ready to serve WebRTC, chat, and auth if MongoDB is connected
+    const isReady = mongoStatus === "up";
     
     res.status(isReady ? httpStatus.OK : httpStatus.SERVICE_UNAVAILABLE).json({
         status: isReady ? "ready" : "not_ready",

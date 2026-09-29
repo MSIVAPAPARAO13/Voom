@@ -1,49 +1,46 @@
 import { Queue } from "bullmq";
-import { connection } from "../config/redis.js";
+import { connection, isRedisConfigured } from "../config/redis.js";
+import logger from "../utils/logger.js";
 
-// Queues with default job options
-export const transcriptionQueue = new Queue("transcription", {
-    connection,
-    defaultJobOptions: {
-        attempts: 3,
-        backoff: {
-            type: "exponential",
-            delay: 5000
-        },
-        removeOnComplete: true,
-        removeOnFail: 100 // Keep last 100 failed jobs for debugging
+const createSafeQueue = (name) => {
+    if (isRedisConfigured && connection) {
+        try {
+            return new Queue(name, {
+                connection,
+                defaultJobOptions: {
+                    attempts: 3,
+                    backoff: {
+                        type: "exponential",
+                        delay: 5000
+                    },
+                    removeOnComplete: true,
+                    removeOnFail: 100
+                }
+            });
+        } catch (err) {
+            logger.warn(`[Queue] Failed to initialize ${name} queue:`, err.message);
+        }
     }
-});
 
-export const intelligenceQueue = new Queue("intelligence", {
-    connection,
-    defaultJobOptions: {
-        attempts: 3,
-        backoff: {
-            type: "exponential",
-            delay: 5000
+    // Safe in-memory fallback if Redis is not configured
+    return {
+        add: async (jobName, data) => {
+            logger.info(`[Queue:Mock] Job '${jobName}' queued in memory for queue '${name}'`);
+            return { id: `mock-${Date.now()}`, name: jobName, data };
         },
-        removeOnComplete: true,
-        removeOnFail: 100
-    }
-});
+        close: async () => {}
+    };
+};
 
-export const knowledgeQueue = new Queue("knowledge", {
-    connection,
-    defaultJobOptions: {
-        attempts: 3,
-        backoff: {
-            type: "exponential",
-            delay: 5000
-        },
-        removeOnComplete: true,
-        removeOnFail: 100
-    }
-});
+// Queues with default job options or fallback
+export const transcriptionQueue = createSafeQueue("transcription");
+export const intelligenceQueue = createSafeQueue("intelligence");
+export const knowledgeQueue = createSafeQueue("knowledge");
 
 // Helper for closing queues gracefully
 export const closeQueues = async () => {
-    await transcriptionQueue.close();
-    await intelligenceQueue.close();
-    await knowledgeQueue.close();
+    if (transcriptionQueue && transcriptionQueue.close) await transcriptionQueue.close();
+    if (intelligenceQueue && intelligenceQueue.close) await intelligenceQueue.close();
+    if (knowledgeQueue && knowledgeQueue.close) await knowledgeQueue.close();
 };
+

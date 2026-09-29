@@ -31,15 +31,27 @@ import jwt from "jsonwebtoken";
 import logger from "../utils/logger.js";
 
 export const connectToSocket = (server) => {
-    const io = new Server(server, {
+    const serverOptions = {
         cors: {
             origin: process.env.CORS_ORIGIN || "http://localhost:3000",
             methods: ["GET", "POST"],
             allowedHeaders: ["Content-Type", "Authorization", "X-Organization-Id"],
             credentials: true
-        },
-        adapter: createAdapter(redisClient, redisSubClient)
-    });
+        }
+    };
+
+    if (redisClient && redisSubClient) {
+        try {
+            serverOptions.adapter = createAdapter(redisClient, redisSubClient);
+            logger.info("[Socket.IO] Using Redis adapter");
+        } catch (err) {
+            logger.warn("[Socket.IO] Failed to attach Redis adapter, using standalone in-memory mode:", err.message);
+        }
+    } else {
+        logger.info("[Socket.IO] Using standalone in-memory adapter");
+    }
+
+    const io = new Server(server, serverOptions);
 
     ioInstance = io;
 
@@ -977,21 +989,24 @@ export const broadcastAIEvent = (meetingCode, eventName, payload) => {
 // PHASE 12: WORKER-TO-API NOTIFICATIONS VIA REDIS PUB/SUB
 // =========================================================================
 
-redisSubClient.subscribe("worker:events", (err) => {
-    if (err) logger.error("Failed to subscribe to worker:events", err);
-});
+if (redisSubClient) {
+    redisSubClient.subscribe("worker:events", (err) => {
+        if (err) logger.error("Failed to subscribe to worker:events", err);
+    });
 
-redisSubClient.on("message", (channel, message) => {
-    if (channel === "worker:events") {
-        try {
-            const data = JSON.parse(message);
-            if (data.type === "transcription") {
-                broadcastTranscriptionEvent(data.meetingCode, data.eventName, data.payload);
-            } else if (data.type === "ai") {
-                broadcastAIEvent(data.meetingCode, data.eventName, data.payload);
+    redisSubClient.on("message", (channel, message) => {
+        if (channel === "worker:events") {
+            try {
+                const data = JSON.parse(message);
+                if (data.type === "transcription") {
+                    broadcastTranscriptionEvent(data.meetingCode, data.eventName, data.payload);
+                } else if (data.type === "ai") {
+                    broadcastAIEvent(data.meetingCode, data.eventName, data.payload);
+                }
+            } catch (e) {
+                logger.error("Failed to process worker event message", e);
             }
-        } catch (e) {
-            logger.error("Failed to process worker event message", e);
         }
-    }
-});
+    });
+}
+

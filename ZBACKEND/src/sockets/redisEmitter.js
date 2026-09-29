@@ -1,8 +1,9 @@
 import { Emitter } from "@socket.io/redis-emitter";
 import { redisSubClient } from "../config/redis.js";
 
-// Initialize emitter using the sub client
-export const ioEmitter = new Emitter(redisSubClient);
+// Initialize emitter using the sub client if present
+export const ioEmitter = redisSubClient ? new Emitter(redisSubClient) : null;
+
 
 /**
  * Cross-process helper to broadcast transcription events
