@@ -23,11 +23,9 @@ class MeetingAIService {
      * Uses OpenAI's Responses API and Zod to guarantee format.
      */
     async generateMeetingIntelligence(transcriptData) {
-        if (!this.apiKey) {
-            throw new Error("OpenAI API key not configured. Set OPENAI_API_KEY in .env");
+        if (!this.apiKey && !process.env.GEMINI_API_KEY) {
+            throw new Error("No AI API key configured. Set GEMINI_API_KEY or OPENAI_API_KEY in .env");
         }
-
-        const client = new OpenAI({ apiKey: this.apiKey });
 
         // Build the transcript text for the prompt
         let transcriptContent = "";
@@ -78,30 +76,46 @@ CRITICAL INSTRUCTIONS:
             if (process.env.GEMINI_API_KEY && !this.apiKey) {
                 const { GoogleGenerativeAI } = await import("@google/generative-ai");
                 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-                const model = genAI.getGenerativeModel({
-                    model: "antigravity-preview-latest",
-                    systemInstruction: systemPrompt,
-                    generationConfig: {
-                        responseMimeType: "application/json",
-                        responseSchema: {
-                            type: "OBJECT",
-                            properties: {
-                                summary: { type: "STRING", description: "A concise summary." },
-                                keyPoints: { type: "ARRAY", items: { type: "STRING" } },
-                                decisions: { type: "ARRAY", items: { type: "OBJECT", properties: { text: { type: "STRING" }, timestamp: { type: "NUMBER", nullable: true } } } },
-                                actionItems: { type: "ARRAY", items: { type: "OBJECT", properties: { task: { type: "STRING" }, assignee: { type: "STRING", nullable: true }, dueDate: { type: "STRING", nullable: true }, timestamp: { type: "NUMBER", nullable: true } } } },
-                                topics: { type: "ARRAY", items: { type: "STRING" } }
-                            },
-                            required: ["summary", "keyPoints", "decisions", "actionItems", "topics"]
-                        }
+                const preferredModel = process.env.GEMINI_AI_MODEL || "gemini-3.7-flash";
+                const candidateModels = [preferredModel, "gemini-flash-latest", "gemini-3.8-flash"].filter((v, i, a) => a.indexOf(v) === i);
+
+                let intelligence = null;
+                let lastErr = null;
+
+                for (const modelName of candidateModels) {
+                    try {
+                        const model = genAI.getGenerativeModel({
+                            model: modelName,
+                            systemInstruction: `${systemPrompt}\n\nReturn strict JSON matching this structure:
+{
+  "summary": "Concise summary string",
+  "keyPoints": ["bullet point 1", "bullet point 2"],
+  "decisions": [{"text": "decision text", "timestamp": 12.5}],
+  "actionItems": [{"task": "task text", "assignee": "Name or null", "dueDate": "Date or null", "timestamp": 14.0}],
+  "topics": ["topic 1", "topic 2"]
+}`,
+                            generationConfig: {
+                                responseMimeType: "application/json",
+                                temperature: 0.1
+                            }
+                        });
+
+                        const result = await model.generateContent(`Meeting Transcript:\n\n${transcriptContent}`);
+                        const intelligenceText = result.response.text();
+                        intelligence = JSON.parse(intelligenceText);
+                        if (intelligence) break;
+                    } catch (err) {
+                        lastErr = err;
                     }
-                });
-                
-                const result = await model.generateContent(`Meeting Transcript:\n\n${transcriptContent}`);
-                const intelligenceText = result.response.text();
-                const intelligence = JSON.parse(intelligenceText);
+                }
+
+                if (!intelligence) {
+                    throw lastErr || new Error("Received empty parsed response from Gemini.");
+                }
+
                 return this.validateAndNormalizeIntelligence(intelligence);
             } else {
+                const client = new OpenAI({ apiKey: this.apiKey });
                 const response = await client.responses.parse({
                     model: this.model,
                     input: [

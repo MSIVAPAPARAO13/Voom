@@ -75,12 +75,26 @@ Use timestamps when available.`;
     } else if (process.env.GEMINI_API_KEY) {
         const { GoogleGenerativeAI } = await import("@google/generative-ai");
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ 
-            model: "antigravity-preview-latest",
-            systemInstruction: systemPrompt
-        });
-        const result = await model.generateContent(userPrompt);
-        answerText = result.response.text();
+        const preferredModel = process.env.GEMINI_AI_MODEL || "gemini-3.7-flash";
+        const candidateModels = [preferredModel, "gemini-flash-latest", "gemini-3.8-flash"].filter((v, i, a) => a.indexOf(v) === i);
+
+        let lastErr = null;
+        for (const modelName of candidateModels) {
+            try {
+                const model = genAI.getGenerativeModel({ 
+                    model: modelName,
+                    systemInstruction: systemPrompt
+                });
+                const result = await model.generateContent(userPrompt);
+                answerText = result.response.text();
+                if (answerText) break;
+            } catch (err) {
+                lastErr = err;
+            }
+        }
+        if (!answerText) {
+            throw lastErr || new Error("Failed to generate response from Gemini");
+        }
     } else {
         const client = getOpenAIClient();
         const model = process.env.OPENAI_AI_MODEL || "gpt-4o-mini";

@@ -48,12 +48,14 @@ export const generateEmbedding = async (text) => {
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
         const model = genAI.getGenerativeModel({ model: "gemini-embedding-2" });
         const result = await model.embedContent(text);
-        // Pad to 1536 dimensions if necessary to match MongoDB index
+        // Ensure 1536 dimensions to match MongoDB index
         const vector = result.embedding.values;
         if (vector.length < 1536) {
             const padded = new Array(1536).fill(0);
             for(let i = 0; i < vector.length; i++) padded[i] = vector[i];
             return padded;
+        } else if (vector.length > 1536) {
+            return vector.slice(0, 1536);
         }
         return vector;
     }
@@ -91,6 +93,8 @@ export const generateEmbeddings = async (texts) => {
                 const padded = new Array(1536).fill(0);
                 for(let i = 0; i < vector.length; i++) padded[i] = vector[i];
                 results.push(padded);
+            } else if (vector.length > 1536) {
+                results.push(vector.slice(0, 1536));
             } else {
                 results.push(vector);
             }
